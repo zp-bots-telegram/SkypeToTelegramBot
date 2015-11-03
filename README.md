@@ -1,6 +1,9 @@
 # SkypeToTelegramBot
 Skype &lt;-> Telegram Bot, finally, no more skype client...
 
+## Downloads
+Grab the latest build from the CI here [![Build Status](http://ci.zackpollard.pro/job/SkypeToTelegramBot/badge/icon)](http://ci.zackpollard.pro/job/SkypeToTelegramBot/)
+
 ## Usage
 java -jar SkypeToTelegramBot.jar TG_BOT_API_KEY
 
