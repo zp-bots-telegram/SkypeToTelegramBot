@@ -80,7 +80,10 @@ public class SkypeManager {
         for(Map.Entry<String, TelegramIDSkypeChat> entry : new HashMap<>(telegramChatToSkypeChat).entrySet()) {
 
             try {
-                telegramToSkypeLink.get(entry.getValue().getTelegramUser()).loadChat(entry.getValue().getSkypeChat());
+                Skype skype = telegramToSkypeLink.get(entry.getValue().getTelegramUser());
+                if(skype.getChat(entry.getValue().getSkypeChat()) == null) {
+                    telegramToSkypeLink.get(entry.getValue().getTelegramUser()).loadChat(entry.getValue().getSkypeChat());
+                }
             } catch (ConnectionException | IOException e) {
                 e.printStackTrace();
             } catch (ChatNotFoundException e) {
