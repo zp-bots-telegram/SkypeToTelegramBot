@@ -47,7 +47,7 @@ public class SkypeEventsListener implements Listener {
 
         if(chat != null) {
 
-            //if(!event.getMessage().getSender().getUsername().equals(instance.getSkypeManager().getSkype(telegramID).getUsername())) {
+            if(!event.getMessage().getSender().getUsername().equals(instance.getSkypeManager().getSkype(telegramID).getUsername())) {
 
                 Message message = telegramBot.sendMessage(TelegramBot.getChat(chat), SendableTextMessage.builder().message("*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + event.getMessage().getContent().asPlaintext()).parseMode(ParseMode.MARKDOWN).build());
 
@@ -63,7 +63,7 @@ public class SkypeEventsListener implements Listener {
 
                     messageCache.put(event.getMessage().getId(), new TGMessageToChat(message.getChat().getId(), message));
                 }
-            //}
+            }
         }
     }
 
@@ -99,7 +99,7 @@ public class SkypeEventsListener implements Listener {
 
         if(chat != null) {
 
-            //if(!event.getMessage().getSender().getUsername().equals(instance.getSkypeManager().getSkype(telegramID).getUsername())) {
+            if(!event.getMessage().getSender().getUsername().equals(instance.getSkypeManager().getSkype(telegramID).getUsername())) {
 
                 System.out.println("Message didn't have same username");
 
@@ -117,7 +117,7 @@ public class SkypeEventsListener implements Listener {
                                 "_Message Edited_\n*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + event.getNewContent()).replyTo(tgMessageToChat.getTgMessage()).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
                     }
                 }
-           // }
+            }
         }
     }
 
