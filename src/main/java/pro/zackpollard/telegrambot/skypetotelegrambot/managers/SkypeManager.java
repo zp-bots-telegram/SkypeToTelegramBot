@@ -15,6 +15,7 @@ import pro.zackpollard.telegrambot.api.user.User;
 import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 import pro.zackpollard.telegrambot.skypetotelegrambot.skype.listeners.SkypeEventsListener;
 import pro.zackpollard.telegrambot.skypetotelegrambot.storage.CredentialStore;
+import pro.zackpollard.telegrambot.skypetotelegrambot.storage.SkypeToTelegramChat;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -42,8 +43,8 @@ public class SkypeManager {
     //Telegram Chat's Telegram User to Skype Chat's
     private final Map<String, TelegramIDSkypeChat> telegramChatToSkypeChat;
 
-    //Telegram User's Skype Chat to Telegram Chat
-    private final Map<String, List<String>> skypeChatToTelegramChat;
+    //<TelegramUserID, <SkypeChatID, TelegramChatID>>
+    private final Map<Integer, Map<String, String>> skypeChatToTelegramChat;
 
     @Getter
     private transient final Map<String, Map<String, String>> linkingQueue;
@@ -91,6 +92,18 @@ public class SkypeManager {
                 TelegramBot.getChat(entry.getKey()).sendMessage("It seems that this chat no longer exists on skype, if this is incorrect then please re-link this chat.", telegramBot);
             }
         }
+
+        System.out.println("This is the map printing section...");
+
+        for(Map.Entry<Integer, Map<String, String>> map : skypeChatToTelegramChat.entrySet()) {
+
+            System.out.println("This is the map for user: " + map.getKey());
+
+            for(Map.Entry<String, String> entry : map.getValue().entrySet()) {
+
+                System.out.println("< " + map.getKey() + " < " + entry.getKey() + ", " + entry.getValue() + " >");
+            }
+        }
     }
 
     public boolean addUser(User telegramUser, String username, String password) {
@@ -111,9 +124,8 @@ public class SkypeManager {
 
         if(isSetup(telegramUser.getId())) {
 
+            boolean removed = credentialStore.removeCredentials(telegramUser);
             instance.saveSkypeManager();
-
-            return credentialStore.removeCredentials(telegramUser);
         }
 
         return false;
@@ -131,6 +143,11 @@ public class SkypeManager {
             telegramToSkypeLink.put(telegramUserID, skype);
             skypeToTelegramLink.put(skype, telegramUserID);
 
+            if(skypeChatToTelegramChat.get(telegramUserID) == null) {
+
+                skypeChatToTelegramChat.put(telegramUserID, new HashMap<>());
+            }
+
             return true;
         } catch (InvalidCredentialsException e) {
             telegramBot.sendMessage(TelegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("Skype credentials were incorrect.").build());
@@ -142,27 +159,30 @@ public class SkypeManager {
         return false;
     }
 
-    public void createLink(Integer telegramUser, GroupChat telegramChat, com.samczsun.skype4j.chat.Chat skypeChat) {
+    public boolean createLink(Integer telegramUser, GroupChat telegramChat, com.samczsun.skype4j.chat.Chat skypeChat) {
+
+        Map<String, String> userChats = skypeChatToTelegramChat.get(telegramUser);
+
+        if(userChats.containsKey(skypeChat.getIdentity())) {
+
+            telegramChat.sendMessage("A link to this chat already exists for another group.", telegramBot);
+            return false;
+        }
 
         telegramChatToSkypeChat.put(telegramChat.getId(), new TelegramIDSkypeChat(telegramUser, skypeChat.getIdentity()));
-
-        List<String> chats = skypeChatToTelegramChat.get(skypeChat.getIdentity());
-
-        if(chats == null) chats = new ArrayList<>();
-
-        chats.add(telegramChat.getId());
-
-        skypeChatToTelegramChat.put(skypeChat.getIdentity(), chats);
+        userChats.put(skypeChat.getIdentity(), telegramChat.getId());
 
         instance.saveSkypeManager();
+
+        return true;
     }
 
-    public boolean removeLink(Chat telegramChat) {
+    public boolean removeLink(Chat telegramChat, Integer telegramUser) {
 
         if(isLinked(telegramChat)) {
 
-            System.out.println(skypeChatToTelegramChat.remove(telegramChatToSkypeChat.get(telegramChat.getId()).getSkypeChat()) != null);
-            System.out.println(telegramChatToSkypeChat.remove(telegramChat.getId()) != null);
+            System.out.println(skypeChatToTelegramChat.get(telegramUser).remove(telegramChatToSkypeChat.get(telegramChat.getId()).getSkypeChat()));
+            System.out.println(telegramChatToSkypeChat.remove(telegramChat.getId()));
 
             return true;
         }
@@ -193,9 +213,10 @@ public class SkypeManager {
         return null;
     }
 
-    public List<String> getTelegramChats(com.samczsun.skype4j.chat.Chat skypeChat) {
 
-        return skypeChatToTelegramChat.get(skypeChat.getIdentity());
+    public String getTelegramChat(com.samczsun.skype4j.chat.Chat chat, Integer telegramID) {
+
+        return skypeChatToTelegramChat.get(telegramID).get(chat.getIdentity());
     }
 
     public Skype getSkype(User user) {

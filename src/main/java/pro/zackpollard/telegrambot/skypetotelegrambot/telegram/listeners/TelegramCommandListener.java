@@ -109,7 +109,7 @@ public class TelegramCommandListener implements Listener {
 
                 if(event.getChat().getType().equals(ChatType.GROUP)) {
 
-                    if(instance.getSkypeManager().removeLink(event.getChat())) {
+                    if(instance.getSkypeManager().removeLink(event.getChat(), event.getMessage().getSender().getId())) {
 
                         event.getChat().sendMessage("The link to this chat was successfully removed.", telegramBot);
                     } else {
