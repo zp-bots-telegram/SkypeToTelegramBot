@@ -1,6 +1,7 @@
 package pro.zackpollard.telegrambot.skypetotelegrambot.telegram.listeners;
 
 import com.samczsun.skype4j.chat.Chat;
+import com.samczsun.skype4j.exceptions.ConnectionException;
 import com.samczsun.skype4j.exceptions.SkypeException;
 import com.samczsun.skype4j.formatting.Message;
 import com.samczsun.skype4j.formatting.Text;
@@ -41,7 +42,7 @@ public class TelegramEventsListener implements Listener {
 
                 try {
                     chat.sendMessage(Message.create().with(Text.plain(event.getContent().getContent())));
-                } catch (SkypeException | IOException e) {
+                } catch (SkypeException e) {
                     e.printStackTrace();
                 }
             } else {
