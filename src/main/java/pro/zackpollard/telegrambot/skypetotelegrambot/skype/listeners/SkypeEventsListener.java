@@ -8,6 +8,8 @@ import com.samczsun.skype4j.events.chat.message.MessageEditedEvent;
 import com.samczsun.skype4j.events.chat.message.MessageReceivedEvent;
 import com.samczsun.skype4j.events.chat.sent.PictureReceivedEvent;
 import com.samczsun.skype4j.events.chat.sent.TypingReceivedEvent;
+import com.samczsun.skype4j.exceptions.ChatNotFoundException;
+import com.samczsun.skype4j.exceptions.ConnectionException;
 import lombok.Getter;
 import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.message.Message;
@@ -47,6 +49,14 @@ public class SkypeEventsListener implements Listener {
     @EventHandler
     public void onMessageReceived(MessageReceivedEvent event) {
 
+        try {
+            if(!event.getChat().isLoaded()) {
+                instance.getSkypeManager().getSkype(telegramID).loadChat(event.getChat().getIdentity());
+            }
+        } catch (ConnectionException | ChatNotFoundException e) {
+            e.printStackTrace();
+        }
+
         String chat = instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID);
 
         if(chat != null) {
@@ -74,6 +84,14 @@ public class SkypeEventsListener implements Listener {
     @EventHandler
     public void onTyping(TypingReceivedEvent event) {
 
+        try {
+            if(!event.getChat().isLoaded()) {
+                instance.getSkypeManager().getSkype(telegramID).loadChat(event.getChat().getIdentity());
+            }
+        } catch (ConnectionException | ChatNotFoundException e) {
+            e.printStackTrace();
+        }
+
         if(event.isTyping()) {
 
             String chat = instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID);
@@ -90,6 +108,14 @@ public class SkypeEventsListener implements Listener {
 
     @EventHandler
     public void onMessageEdit(MessageEditedEvent event) {
+
+        try {
+            if(!event.getChat().isLoaded()) {
+                instance.getSkypeManager().getSkype(telegramID).loadChat(event.getChat().getIdentity());
+            }
+        } catch (ConnectionException | ChatNotFoundException e) {
+            e.printStackTrace();
+        }
 
         System.out.println("Message Edited: " + event.getNewContent());
         System.out.println(event.getChat());
@@ -127,6 +153,14 @@ public class SkypeEventsListener implements Listener {
 
     @EventHandler
     public void onPictureRecevied(PictureReceivedEvent event) {
+
+        try {
+            if(!event.getChat().isLoaded()) {
+                instance.getSkypeManager().getSkype(telegramID).loadChat(event.getChat().getIdentity());
+            }
+        } catch (ConnectionException | ChatNotFoundException e) {
+            e.printStackTrace();
+        }
 
         String chat = instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID);
 
