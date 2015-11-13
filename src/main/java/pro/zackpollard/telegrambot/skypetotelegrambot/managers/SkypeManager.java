@@ -163,10 +163,19 @@ public class SkypeManager {
 
         Map<String, String> userChats = skypeChatToTelegramChat.get(telegramUser);
 
-        if(userChats.containsKey(skypeChat.getIdentity())) {
+        String linkedTelegramChatID = userChats.get(skypeChat.getIdentity());
 
-            telegramChat.sendMessage("A link to this chat already exists for another group.", telegramBot);
-            return false;
+        if(linkedTelegramChatID != null) {
+
+            telegramChat.sendMessage("A link to this chat already exists for another group, the link will be moved to this chat.", telegramBot);
+            if(this.removeLink(TelegramBot.getChat(linkedTelegramChatID), telegramUser)) {
+
+                TelegramBot.getChat(linkedTelegramChatID).sendMessage("The skype link in this chat has been removed due to the link being made in another chat.", telegramBot);
+            } else {
+
+                telegramChat.sendMessage("Removal of the link failed.", telegramBot);
+                return false;
+            }
         }
 
         telegramChatToSkypeChat.put(telegramChat.getId(), new TelegramIDSkypeChat(telegramUser, skypeChat.getIdentity()));
