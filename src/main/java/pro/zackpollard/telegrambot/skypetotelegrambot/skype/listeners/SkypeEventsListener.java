@@ -6,16 +6,17 @@ import com.samczsun.skype4j.events.EventHandler;
 import com.samczsun.skype4j.events.Listener;
 import com.samczsun.skype4j.events.chat.message.MessageEditedEvent;
 import com.samczsun.skype4j.events.chat.message.MessageReceivedEvent;
+import com.samczsun.skype4j.events.chat.sent.PictureReceivedEvent;
 import com.samczsun.skype4j.events.chat.sent.TypingReceivedEvent;
 import lombok.Getter;
-import pro.zackpollard.telegrambot.api.chat.message.Message;
-import pro.zackpollard.telegrambot.api.chat.message.send.ChatAction;
-import pro.zackpollard.telegrambot.api.chat.message.send.ParseMode;
-import pro.zackpollard.telegrambot.api.chat.message.send.SendableChatAction;
-import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 import pro.zackpollard.telegrambot.api.TelegramBot;
-import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
+import pro.zackpollard.telegrambot.api.chat.message.Message;
+import pro.zackpollard.telegrambot.api.chat.message.send.*;
+import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +29,7 @@ public class SkypeEventsListener implements Listener {
     private final SkypeToTelegramBot instance;
     private final TelegramBot telegramBot;
     private final Integer telegramID;
+    private final File tmpImageDirectory;
 
     //<SkypeChatID, <SkypeMessageID, TGMessageToChat>>
     private final Map<String, Cache<String, TGMessageToChat>> chatCache;
@@ -38,6 +40,8 @@ public class SkypeEventsListener implements Listener {
         this.telegramBot = telegramBot;
         this.telegramID = telegramID;
         this.chatCache = new HashMap<>();
+        this.tmpImageDirectory = new File(System.getProperty("java.io.tmpdir") + File.pathSeparator + "tgtoskypebot" + System.currentTimeMillis());
+        this.tmpImageDirectory.mkdirs();
     }
 
     @EventHandler
@@ -117,6 +121,31 @@ public class SkypeEventsListener implements Listener {
                                 "_Message Edited_\n*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + event.getNewContent()).replyTo(tgMessageToChat.getTgMessage()).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
                     }
                 }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPictureRecevied(PictureReceivedEvent event) {
+
+        String chat = instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID);
+
+        if(chat != null) {
+
+            if(!event.getSender().getUsername().equals(instance.getSkypeManager().getSkype(telegramID).getUsername())) {
+
+                File imageFile = new File(tmpImageDirectory + File.separator + event.getOriginalName());
+
+                try {
+                    ImageIO.write(event.getSentImage(), "jpg", imageFile);
+                } catch (IOException e) {
+                    System.err.println("An error occured whilst trying to save an image sent from skype to disk.");
+                    TelegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message("*[ERROR]* - An image that was sent from skype could not be sent successfully to telegram, report this to @zackpollard.").parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                    e.printStackTrace();
+                    return;
+                }
+
+                TelegramBot.getChat(chat).sendMessage(SendablePhotoMessage.builder().photo(new InputFile(imageFile)).caption("Image sent by " + (event.getSender().getDisplayName() != null ? event.getSender().getDisplayName() : event.getSender().getUsername())).build(), telegramBot);
             }
         }
     }
