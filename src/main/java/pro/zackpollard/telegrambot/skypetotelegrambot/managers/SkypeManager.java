@@ -85,7 +85,7 @@ public class SkypeManager {
                 if(skype.getChat(entry.getValue().getSkypeChat()) == null) {
                     telegramToSkypeLink.get(entry.getValue().getTelegramUser()).loadChat(entry.getValue().getSkypeChat());
                 }
-            } catch (ConnectionException | IOException e) {
+            } catch (ConnectionException e) {
                 e.printStackTrace();
             } catch (ChatNotFoundException e) {
                 telegramChatToSkypeChat.remove(entry.getKey());
