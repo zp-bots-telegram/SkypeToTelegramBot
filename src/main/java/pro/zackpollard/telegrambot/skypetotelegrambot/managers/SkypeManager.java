@@ -11,6 +11,7 @@ import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.Chat;
 import pro.zackpollard.telegrambot.api.chat.GroupChat;
 import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
+import pro.zackpollard.telegrambot.api.keyboards.ReplyKeyboardHide;
 import pro.zackpollard.telegrambot.api.user.User;
 import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 import pro.zackpollard.telegrambot.skypetotelegrambot.skype.listeners.SkypeEventsListener;
@@ -179,6 +180,7 @@ public class SkypeManager {
         }
 
         telegramChatToSkypeChat.put(telegramChat.getId(), new TelegramIDSkypeChat(telegramUser, skypeChat.getIdentity()));
+        telegramBot.sendMessage(telegramChat, SendableTextMessage.builder().message("The chats have been linked successfully!").replyMarkup(new ReplyKeyboardHide()).build());
         userChats.put(skypeChat.getIdentity(), telegramChat.getId());
 
         instance.saveSkypeManager();

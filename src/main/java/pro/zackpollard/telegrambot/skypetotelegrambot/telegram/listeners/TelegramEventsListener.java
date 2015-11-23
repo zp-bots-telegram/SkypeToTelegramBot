@@ -55,8 +55,7 @@ public class TelegramEventsListener implements Listener {
 
                     if (chatID != null) {
 
-                        instance.getSkypeManager().createLink(event.getMessage().getSender().getId(), (GroupChat) event.getChat(), instance.getSkypeManager().getSkype(event.getMessage().getSender()).getChat(chatID));
-                        telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("The chats have been linked successfully!").replyMarkup(new ReplyKeyboardHide()).build());
+                        instance.getSkypeManager().createLink(event.getMessage().getSender().getId(), (GroupChat) event.getChat(), instance.getSkypeManager().getSkype(event.getMessage().getSender()).getChat(chatID));;
                     }
                 } else {
 
