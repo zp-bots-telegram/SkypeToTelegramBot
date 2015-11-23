@@ -56,30 +56,36 @@ public class TelegramCommandListener implements Listener {
 
                 if(event.getChat().getType().equals(ChatType.GROUP)) {
 
-                    Skype skype = instance.getSkypeManager().getSkype(event.getMessage().getSender());
+                    if(!instance.getSkypeManager().isLinked(event.getChat())) {
 
-                    if(skype != null) {
+                        Skype skype = instance.getSkypeManager().getSkype(event.getMessage().getSender());
 
-                        Map<String, String> chats = new HashMap<>();
+                        if(skype != null) {
 
-                        for(Chat chat : skype.getAllChats()) {
+                            Map<String, String> chats = new HashMap<>();
 
-                            if(chat instanceof GroupChat) {
+                            for (Chat chat : skype.getAllChats()) {
 
-                                chats.put(((GroupChat) chat).getTopic(), chat.getIdentity());
-                            } else if(chat instanceof IndividualChat) {
+                                if (chat instanceof GroupChat) {
 
-                                chats.put(chat.getIdentity().substring(2), chat.getIdentity());
+                                    chats.put(((GroupChat) chat).getTopic(), chat.getIdentity());
+                                } else if (chat instanceof IndividualChat) {
+
+                                    chats.put(chat.getIdentity().substring(2), chat.getIdentity());
+                                }
                             }
+
+                            ReplyKeyboardMarkup.ReplyKeyboardMarkupBuilder keyboardMarkupBuilder = ReplyKeyboardMarkup.builder().resize(true).oneTime(true).selective(true);
+
+                            chats.keySet().forEach(keyboardMarkupBuilder::addRow);
+
+                            Message message = telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("Please select the chat you want to link.").replyMarkup(keyboardMarkupBuilder.build()).replyTo(event.getMessage()).build());
+
+                            instance.getSkypeManager().getLinkingQueue().put(event.getChat().getId(), chats);
                         }
+                    } else {
 
-                        ReplyKeyboardMarkup.ReplyKeyboardMarkupBuilder keyboardMarkupBuilder = ReplyKeyboardMarkup.builder().resize(true).oneTime(true).selective(true);
-
-                        chats.keySet().forEach(keyboardMarkupBuilder::addRow);
-
-                        Message message = telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("Please select the chat you want to link.").replyMarkup(keyboardMarkupBuilder.build()).replyTo(event.getMessage()).build());
-
-                        instance.getSkypeManager().getLinkingQueue().put(event.getChat().getId(), chats);
+                        telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("This chat is already linked, either create another chat to make a new link, or /unlink this chat.").replyTo(event.getMessage()).build());
                     }
                 }
 
