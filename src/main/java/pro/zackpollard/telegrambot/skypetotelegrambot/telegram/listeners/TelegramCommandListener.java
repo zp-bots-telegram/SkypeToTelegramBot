@@ -4,14 +4,15 @@ import com.samczsun.skype4j.Skype;
 import com.samczsun.skype4j.chat.Chat;
 import com.samczsun.skype4j.chat.GroupChat;
 import com.samczsun.skype4j.chat.IndividualChat;
-import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
+import com.samczsun.skype4j.exceptions.ChatNotFoundException;
+import com.samczsun.skype4j.exceptions.ConnectionException;
 import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.ChatType;
-import pro.zackpollard.telegrambot.api.chat.message.Message;
 import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
 import pro.zackpollard.telegrambot.api.event.Listener;
 import pro.zackpollard.telegrambot.api.event.chat.message.CommandMessageReceivedEvent;
 import pro.zackpollard.telegrambot.api.keyboards.ReplyKeyboardMarkup;
+import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -62,26 +63,58 @@ public class TelegramCommandListener implements Listener {
 
                         if(skype != null) {
 
-                            Map<String, String> chats = new HashMap<>();
+                            if(event.getArgs().length == 0) {
 
-                            for (Chat chat : skype.getAllChats()) {
+                                Map<String, String> chats = new HashMap<>();
 
-                                if (chat instanceof GroupChat) {
+                                for (Chat chat : skype.getAllChats()) {
 
-                                    chats.put(((GroupChat) chat).getTopic(), chat.getIdentity());
-                                } else if (chat instanceof IndividualChat) {
+                                    if (chat instanceof GroupChat) {
 
-                                    chats.put(chat.getIdentity().substring(2), chat.getIdentity());
+                                        chats.put(((GroupChat) chat).getTopic(), chat.getIdentity());
+                                    } else if (chat instanceof IndividualChat) {
+
+                                        chats.put(chat.getIdentity().substring(2), chat.getIdentity());
+                                    }
+                                }
+
+                                ReplyKeyboardMarkup.ReplyKeyboardMarkupBuilder keyboardMarkupBuilder = ReplyKeyboardMarkup.builder().resize(true).oneTime(true).selective(true);
+
+                                chats.keySet().forEach(keyboardMarkupBuilder::addRow);
+
+                                telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("Please select the chat you want to link. You can also do /link (username) and /link (chatID). You can get the chat ID of a skype chat by typing /showname in the skype chat you would like to link.").replyMarkup(keyboardMarkupBuilder.build()).replyTo(event.getMessage()).build());
+
+                                instance.getSkypeManager().getLinkingQueue().put(event.getChat().getId(), chats);
+                            } else if(event.getArgs().length == 1) {
+
+                                String chatID = event.getArgs()[0];
+
+                                if(Character.isDigit(chatID.charAt(0))) {
+
+                                    chatID = "8:" + chatID;
+                                }
+
+                                Chat chat = skype.getChat(chatID);
+
+                                if(chat == null) {
+
+                                    try {
+                                        chat = skype.loadChat(chatID);
+                                    } catch (ConnectionException e) {
+                                        telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("There was a connection error whilst trying to link the chat, please try again later.").replyTo(event.getMessage()).build());
+                                    } catch (ChatNotFoundException e) {
+                                        telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("A chat with the ID you entered does not exist.").replyTo(event.getMessage()).build());
+                                    }
+                                }
+
+                                if(chat != null) {
+
+                                    instance.getSkypeManager().createLink(event.getMessage().getSender().getId(), (pro.zackpollard.telegrambot.api.chat.GroupChat) event.getChat(), chat);
+                                } else {
+
+                                    telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("There was an error whilst trying to link the chat, please report this to @zackpollard.").replyTo(event.getMessage()).build());
                                 }
                             }
-
-                            ReplyKeyboardMarkup.ReplyKeyboardMarkupBuilder keyboardMarkupBuilder = ReplyKeyboardMarkup.builder().resize(true).oneTime(true).selective(true);
-
-                            chats.keySet().forEach(keyboardMarkupBuilder::addRow);
-
-                            Message message = telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("Please select the chat you want to link.").replyMarkup(keyboardMarkupBuilder.build()).replyTo(event.getMessage()).build());
-
-                            instance.getSkypeManager().getLinkingQueue().put(event.getChat().getId(), chats);
                         } else {
 
                             telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("You must authenticate with the bot first by typing /login (username) (password) in the bots private chat.").replyTo(event.getMessage()).build());
