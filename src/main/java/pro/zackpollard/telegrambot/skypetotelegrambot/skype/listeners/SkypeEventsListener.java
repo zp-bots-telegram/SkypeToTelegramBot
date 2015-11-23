@@ -49,6 +49,9 @@ public class SkypeEventsListener implements Listener {
     @EventHandler
     public void onMessageReceived(MessageReceivedEvent event) {
 
+        System.out.println("Person is typing in " + event.getChat().getIdentity());
+        System.out.println("Chat " + (event.getChat().isLoaded() ? "is" : "isn't") + " loaded.");
+
         try {
             if(!event.getChat().isLoaded()) {
                 instance.getSkypeManager().getSkype(telegramID).loadChat(event.getChat().getIdentity());
@@ -56,6 +59,8 @@ public class SkypeEventsListener implements Listener {
         } catch (ConnectionException | ChatNotFoundException e) {
             e.printStackTrace();
         }
+
+        System.out.println("Chat " + (event.getChat().isLoaded() ? "is" : "isn't") + " now loaded.");
 
         String chat = instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID);
 
@@ -84,14 +89,6 @@ public class SkypeEventsListener implements Listener {
     @EventHandler
     public void onTyping(TypingReceivedEvent event) {
 
-        try {
-            if(!event.getChat().isLoaded()) {
-                instance.getSkypeManager().getSkype(telegramID).loadChat(event.getChat().getIdentity());
-            }
-        } catch (ConnectionException | ChatNotFoundException e) {
-            e.printStackTrace();
-        }
-
         if(event.isTyping()) {
 
             String chat = instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID);
@@ -109,23 +106,7 @@ public class SkypeEventsListener implements Listener {
     @EventHandler
     public void onMessageEdit(MessageEditedEvent event) {
 
-        try {
-            if(!event.getChat().isLoaded()) {
-                instance.getSkypeManager().getSkype(telegramID).loadChat(event.getChat().getIdentity());
-            }
-        } catch (ConnectionException | ChatNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        System.out.println("Message Edited: " + event.getNewContent());
-        System.out.println(event.getChat());
-        System.out.println(instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID));
-        System.out.println(event.getMessage().getId());
-        System.out.println(event.getMessage().getContent());
-
         String chat = instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID);
-
-        System.out.println("Telegram chat ID was: " + chat);
 
         if(chat != null) {
 
@@ -154,13 +135,7 @@ public class SkypeEventsListener implements Listener {
     @EventHandler
     public void onPictureRecevied(PictureReceivedEvent event) {
 
-        try {
-            if(!event.getChat().isLoaded()) {
-                instance.getSkypeManager().getSkype(telegramID).loadChat(event.getChat().getIdentity());
-            }
-        } catch (ConnectionException | ChatNotFoundException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Picture received!");
 
         String chat = instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID);
 
@@ -171,7 +146,7 @@ public class SkypeEventsListener implements Listener {
                 File imageFile = new File(tmpImageDirectory + File.separator + event.getOriginalName());
 
                 try {
-                    ImageIO.write(event.getSentImage(), "jpg", imageFile);
+                    ImageIO.write(event.getSentImage(), "png", imageFile);
                 } catch (IOException e) {
                     System.err.println("An error occured whilst trying to save an image sent from skype to disk.");
                     TelegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message("*[ERROR]* - An image that was sent from skype could not be sent successfully to telegram, report this to @zackpollard.").parseMode(ParseMode.MARKDOWN).build(), telegramBot);
