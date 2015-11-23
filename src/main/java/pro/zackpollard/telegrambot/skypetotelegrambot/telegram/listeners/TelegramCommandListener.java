@@ -82,6 +82,9 @@ public class TelegramCommandListener implements Listener {
                             Message message = telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("Please select the chat you want to link.").replyMarkup(keyboardMarkupBuilder.build()).replyTo(event.getMessage()).build());
 
                             instance.getSkypeManager().getLinkingQueue().put(event.getChat().getId(), chats);
+                        } else {
+
+                            telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("You must authenticate with the bot first by typing /login (username) (password) in the bots private chat.").replyTo(event.getMessage()).build());
                         }
                     } else {
 
