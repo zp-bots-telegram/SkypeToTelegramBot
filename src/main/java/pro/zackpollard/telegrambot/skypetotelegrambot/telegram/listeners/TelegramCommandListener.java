@@ -89,7 +89,7 @@ public class TelegramCommandListener implements Listener {
 
                                 String chatID = event.getArgs()[0];
 
-                                if(Character.isDigit(chatID.charAt(0))) {
+                                if(!Character.isDigit(chatID.charAt(0))) {
 
                                     chatID = "8:" + chatID;
                                 }
