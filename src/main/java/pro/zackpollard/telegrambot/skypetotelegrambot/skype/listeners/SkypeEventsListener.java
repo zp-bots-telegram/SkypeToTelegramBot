@@ -8,6 +8,9 @@ import com.samczsun.skype4j.events.chat.message.MessageEditedEvent;
 import com.samczsun.skype4j.events.chat.message.MessageReceivedEvent;
 import com.samczsun.skype4j.events.chat.sent.PictureReceivedEvent;
 import com.samczsun.skype4j.events.chat.sent.TypingReceivedEvent;
+import com.samczsun.skype4j.events.error.ErrorEvent;
+import com.samczsun.skype4j.events.error.MajorErrorEvent;
+import com.samczsun.skype4j.events.error.MinorErrorEvent;
 import com.samczsun.skype4j.exceptions.ChatNotFoundException;
 import com.samczsun.skype4j.exceptions.ConnectionException;
 import lombok.Getter;
@@ -157,6 +160,20 @@ public class SkypeEventsListener implements Listener {
                 TelegramBot.getChat(chat).sendMessage(SendablePhotoMessage.builder().photo(new InputFile(imageFile)).caption("Image sent by " + (event.getSender().getDisplayName() != null ? event.getSender().getDisplayName() : event.getSender().getUsername())).build(), telegramBot);
             }
         }
+    }
+
+    @EventHandler
+    public void onSkypeError(MajorErrorEvent event) {
+
+        System.out.println("There was a major error in " + event.getSource().name() + ". The error message was: \"" + event.getError().getMessage() + "\"");
+        event.getError().printStackTrace();
+    }
+
+    @EventHandler
+    public void onSkypeError(MinorErrorEvent event) {
+
+        System.out.println("There was a minor error in " + event.getSource().name() + ". The error message was: \"" + event.getError().getMessage() + "\"");
+        event.getError().printStackTrace();
     }
 
     private class TGMessageToChat {
