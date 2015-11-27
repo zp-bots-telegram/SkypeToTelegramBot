@@ -138,7 +138,7 @@ public class SkypeManager {
 
             Skype skype = new SkypeBuilder(username, password).withAllResources().build();
             skype.login();
-            skype.loadMoreChats(25);
+            skype.loadMoreChats(10);
             skype.getEventDispatcher().registerListener(new SkypeEventsListener(instance, telegramBot, telegramUserID));
             skype.subscribe();
 
