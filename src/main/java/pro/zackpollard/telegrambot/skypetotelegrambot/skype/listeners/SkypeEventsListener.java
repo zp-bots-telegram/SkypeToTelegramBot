@@ -2,6 +2,7 @@ package pro.zackpollard.telegrambot.skypetotelegrambot.skype.listeners;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.samczsun.skype4j.chat.IndividualChat;
 import com.samczsun.skype4j.events.EventHandler;
 import com.samczsun.skype4j.events.Listener;
 import com.samczsun.skype4j.events.chat.message.MessageEditedEvent;
@@ -94,7 +95,7 @@ public class SkypeEventsListener implements Listener {
     @EventHandler
     public void onTyping(TypingReceivedEvent event) {
 
-        if(event.isTyping()) {
+        if(event.isTyping() && event.getChat() instanceof IndividualChat) {
 
             String chat = instance.getSkypeManager().getTelegramChat(event.getChat(), telegramID);
 
