@@ -16,12 +16,9 @@ import pro.zackpollard.telegrambot.api.user.User;
 import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 import pro.zackpollard.telegrambot.skypetotelegrambot.skype.listeners.SkypeEventsListener;
 import pro.zackpollard.telegrambot.skypetotelegrambot.storage.CredentialStore;
-import pro.zackpollard.telegrambot.skypetotelegrambot.storage.SkypeToTelegramChat;
+import pro.zackpollard.telegrambot.skypetotelegrambot.storage.PermissionsStore;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,6 +28,9 @@ public class SkypeManager {
 
     private transient final TelegramBot telegramBot;
     private transient final SkypeToTelegramBot instance;
+
+    @Getter
+    private final PermissionsStore permissionsStore;
 
     @Getter
     private final CredentialStore credentialStore;
@@ -55,6 +55,7 @@ public class SkypeManager {
         this.instance = SkypeToTelegramBot.getInstance();
         this.telegramBot = instance.getTelegramBot();
 
+        this.permissionsStore = new PermissionsStore();
         this.credentialStore = new CredentialStore();
 
         this.telegramToSkypeLink = new HashMap<>();

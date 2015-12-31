@@ -13,6 +13,7 @@ import pro.zackpollard.telegrambot.api.event.Listener;
 import pro.zackpollard.telegrambot.api.event.chat.message.CommandMessageReceivedEvent;
 import pro.zackpollard.telegrambot.api.keyboards.ReplyKeyboardMarkup;
 import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
+import pro.zackpollard.telegrambot.skypetotelegrambot.storage.PermissionsStore;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,13 @@ public class TelegramCommandListener implements Listener {
         switch(event.getCommand().toLowerCase()) {
 
             case "login": {
+
+                if(instance.getSkypeManager().getPermissionsStore().getUserRoles().isEmpty()) {
+
+                    instance.getSkypeManager().getPermissionsStore().setRole(event.getMessage().getSender().getId(), PermissionsStore.UserRole.SUPERUSER);
+                    event.getChat().sendMessage("You were set as a superuser for the bot.", telegramBot);
+                    instance.saveSkypeManager();
+                }
 
                 if(event.getChat().getType().equals(ChatType.PRIVATE)) {
 
@@ -161,6 +169,21 @@ public class TelegramCommandListener implements Listener {
                 }
 
                 break;
+            }
+
+            case "shutdown": {
+
+                if(event.getChat().getType().equals(ChatType.PRIVATE)) {
+
+                    if(instance.getSkypeManager().getPermissionsStore().getRole(event.getMessage().getSender().getId()).equals(PermissionsStore.UserRole.SUPERUSER)) {
+
+                        System.out.println("User: " + event.getMessage().getSender().getId() + " (" + event.getMessage().getSender().getUsername() + ") told the bot to shutdown.");
+                        System.exit(0);
+                    } else {
+
+                        event.getChat().sendMessage(SendableTextMessage.builder().message("You do not have permission to do this.").replyTo(event.getMessage()).build(), telegramBot);
+                    }
+                }
             }
         }
     }
