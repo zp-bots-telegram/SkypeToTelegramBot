@@ -1,21 +1,22 @@
 package pro.zackpollard.telegrambot.skypetotelegrambot.telegram.listeners;
 
+import com.samczsun.skype4j.Skype;
 import com.samczsun.skype4j.chat.Chat;
-import com.samczsun.skype4j.exceptions.ConnectionException;
+import com.samczsun.skype4j.events.misc.CaptchaEvent;
 import com.samczsun.skype4j.exceptions.SkypeException;
 import com.samczsun.skype4j.formatting.Message;
 import com.samczsun.skype4j.formatting.Text;
-import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.ChatType;
 import pro.zackpollard.telegrambot.api.chat.GroupChat;
-import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
 import pro.zackpollard.telegrambot.api.event.Listener;
 import pro.zackpollard.telegrambot.api.event.chat.message.TextMessageReceivedEvent;
-import pro.zackpollard.telegrambot.api.keyboards.ReplyKeyboardHide;
+import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
+import pro.zackpollard.telegrambot.skypetotelegrambot.skype.Captcha;
 
-import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Zack Pollard
@@ -24,6 +25,7 @@ public class TelegramEventsListener implements Listener {
 
     private final SkypeToTelegramBot instance;
     private final TelegramBot telegramBot;
+    private final Set<Captcha> captchas = new HashSet<>();
 
     public TelegramEventsListener(SkypeToTelegramBot instance) {
 
@@ -62,6 +64,14 @@ public class TelegramEventsListener implements Listener {
                     event.getChat().sendMessage("This chat is not linked to a skype chat, use /link to link it!", telegramBot);
                 }
             }
+        } else if(event.getChat().getType().equals(ChatType.PRIVATE)) {
+
+            
         }
+    }
+
+    public void captchEvent(Skype skype, CaptchaEvent captchaEvent) {
+
+        //TODO: Add support for sending the captcha back to the bot.
     }
 }

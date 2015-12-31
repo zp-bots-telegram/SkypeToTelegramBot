@@ -1,0 +1,1 @@
+Implement contacts utilisation, getAllContacts() is a thing.

@@ -8,9 +8,9 @@ import com.samczsun.skype4j.events.chat.message.MessageEditedEvent;
 import com.samczsun.skype4j.events.chat.message.MessageReceivedEvent;
 import com.samczsun.skype4j.events.chat.sent.PictureReceivedEvent;
 import com.samczsun.skype4j.events.chat.sent.TypingReceivedEvent;
-import com.samczsun.skype4j.events.error.ErrorEvent;
 import com.samczsun.skype4j.events.error.MajorErrorEvent;
 import com.samczsun.skype4j.events.error.MinorErrorEvent;
+import com.samczsun.skype4j.events.misc.CaptchaEvent;
 import com.samczsun.skype4j.exceptions.ChatNotFoundException;
 import com.samczsun.skype4j.exceptions.ConnectionException;
 import lombok.Getter;
@@ -22,6 +22,8 @@ import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -165,6 +167,14 @@ public class SkypeEventsListener implements Listener {
     @EventHandler
     public void onSkypeError(MajorErrorEvent event) {
 
+        TelegramBot.getChat(this.telegramID).sendMessage(SendableTextMessage.builder().message("A major error has occurred, the error message was " + event.getError().getMessage()).build(), telegramBot);
+        String stacktrace = "";
+        for(StackTraceElement element : event.getError().getStackTrace()) {
+
+            stacktrace += element.toString() + '\n';
+        }
+        TelegramBot.getChat(this.telegramID).sendMessage(SendableTextMessage.builder().message("The stacktrace is:\n" + stacktrace).build(), telegramBot);
+        TelegramBot.getChat(this.telegramID).sendMessage("Please send the previous two messages to @zackpollard on telegram.", telegramBot);
         System.out.println("There was a major error in " + event.getSource().name() + ". The error message was: \"" + event.getError().getMessage() + "\"");
         event.getError().printStackTrace();
     }
@@ -172,8 +182,32 @@ public class SkypeEventsListener implements Listener {
     @EventHandler
     public void onSkypeError(MinorErrorEvent event) {
 
+        TelegramBot.getChat(this.telegramID).sendMessage(SendableTextMessage.builder().message("A minor error has occurred, the error message was " + event.getError().getMessage()).build(), telegramBot);
+        String stacktrace = "";
+        for(StackTraceElement element : event.getError().getStackTrace()) {
+
+            stacktrace += element.toString() + '\n';
+        }
+        TelegramBot.getChat(this.telegramID).sendMessage(SendableTextMessage.builder().message("The stacktrace is:\n" + stacktrace).build(), telegramBot);
+        TelegramBot.getChat(this.telegramID).sendMessage("Please send the previous two messages to @zackpollard on telegram.", telegramBot);
         System.out.println("There was a minor error in " + event.getSource().name() + ". The error message was: \"" + event.getError().getMessage() + "\"");
         event.getError().printStackTrace();
+    }
+
+    @EventHandler
+    public void onCaptcha(CaptchaEvent event) {
+
+        System.out.println("A captcha was detected and has been sent to the user.");
+
+        TelegramBot.getChat(this.telegramID).sendMessage(SendableTextMessage.builder().message("Captcha code required. Please reply to this message with the correct captcha code. [Click here to view the captcha](" + event.getUrl() + ")").parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+
+        try {
+            TelegramBot.getChat(this.telegramID).sendMessage(SendablePhotoMessage.builder().photo(new InputFile(new URL(event.getUrl()))).caption("Reply to the previous message with the captcha code.").build(), telegramBot);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     private class TGMessageToChat {
