@@ -3,9 +3,8 @@ package pro.zackpollard.telegrambot.skypetotelegrambot;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.Getter;
-import pro.zackpollard.telegrambot.skypetotelegrambot.managers.SkypeManager;
 import pro.zackpollard.telegrambot.api.TelegramBot;
-import pro.zackpollard.telegrambot.skypetotelegrambot.storage.CredentialStore;
+import pro.zackpollard.telegrambot.skypetotelegrambot.managers.SkypeManager;
 import pro.zackpollard.telegrambot.skypetotelegrambot.telegram.listeners.TelegramCommandListener;
 import pro.zackpollard.telegrambot.skypetotelegrambot.telegram.listeners.TelegramEventsListener;
 
@@ -47,7 +46,7 @@ public class SkypeToTelegramBot {
 
         telegramBot.getEventsManager().register(telegramCommandListener);
         telegramBot.getEventsManager().register(telegramEventsListener);
-        telegramBot.startUpdates(true);
+        telegramBot.startUpdates(false);
     }
 
     public void initSkypeManager() {
