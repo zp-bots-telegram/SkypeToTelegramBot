@@ -74,7 +74,12 @@ public class SkypeEventsListener implements Listener {
 
             if(!event.getMessage().getSender().getUsername().equals(instance.getSkypeManager().getSkype(telegramID).getUsername())) {
 
-                Message message = telegramBot.sendMessage(TelegramBot.getChat(chat), SendableTextMessage.builder().message("*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + event.getMessage().getContent().asPlaintext()).parseMode(ParseMode.MARKDOWN).build());
+                Message message = null;
+                try {
+                    message = telegramBot.sendMessage(TelegramBot.getChat(chat), SendableTextMessage.builder().message("*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + event.getMessage().getContent().asPlaintext()).parseMode(ParseMode.MARKDOWN).build());
+                } catch (ConnectionException e) {
+                    e.printStackTrace();
+                }
 
                 if (message != null) {
 
@@ -130,8 +135,12 @@ public class SkypeEventsListener implements Listener {
 
                     if(tgMessageToChat != null) {
 
-                        TelegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message(
-                                "_Message Edited_\n*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + event.getNewContent()).replyTo(tgMessageToChat.getTgMessage()).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                        try {
+                            TelegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message(
+                                    "_Message Edited_\n*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + event.getNewContent()).replyTo(tgMessageToChat.getTgMessage()).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                        } catch (ConnectionException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }
@@ -160,7 +169,11 @@ public class SkypeEventsListener implements Listener {
                     return;
                 }
 
-                TelegramBot.getChat(chat).sendMessage(SendablePhotoMessage.builder().photo(new InputFile(imageFile)).caption("Image sent by " + (event.getSender().getDisplayName() != null ? event.getSender().getDisplayName() : event.getSender().getUsername())).build(), telegramBot);
+                try {
+                    TelegramBot.getChat(chat).sendMessage(SendablePhotoMessage.builder().photo(new InputFile(imageFile)).caption("Image sent by " + (event.getSender().getDisplayName() != null ? event.getSender().getDisplayName() : event.getSender().getUsername())).build(), telegramBot);
+                } catch (ConnectionException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
