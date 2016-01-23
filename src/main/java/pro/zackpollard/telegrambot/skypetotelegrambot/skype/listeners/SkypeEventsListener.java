@@ -139,7 +139,6 @@ public class SkypeEventsListener implements Listener {
                         try {
                             TelegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message(
                                     "_Message Edited_\n*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(event.getNewContent())).replyTo(tgMessageToChat.getTgMessage()).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
-                            instance.getSkypeManager().getLastSyncedSkypeMessage().put(event.getChat().getIdentity(), event.getMessage().getId());
                         } catch (ConnectionException e) {
                             e.printStackTrace();
                         }
