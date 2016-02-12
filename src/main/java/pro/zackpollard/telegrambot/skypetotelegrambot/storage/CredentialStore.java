@@ -13,7 +13,7 @@ import java.util.Map;
 public class CredentialStore {
 
     @Getter
-    private final Map<Integer, Credentials> telegramToSkypeCredentials;
+    private final Map<Long, Credentials> telegramToSkypeCredentials;
 
     public CredentialStore() {
 

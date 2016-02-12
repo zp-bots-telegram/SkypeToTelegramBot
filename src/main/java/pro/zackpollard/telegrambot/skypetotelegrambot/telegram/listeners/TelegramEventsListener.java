@@ -1,8 +1,6 @@
 package pro.zackpollard.telegrambot.skypetotelegrambot.telegram.listeners;
 
-import com.samczsun.skype4j.Skype;
 import com.samczsun.skype4j.chat.Chat;
-import com.samczsun.skype4j.events.misc.CaptchaEvent;
 import com.samczsun.skype4j.exceptions.SkypeException;
 import com.samczsun.skype4j.formatting.Message;
 import com.samczsun.skype4j.formatting.Text;
@@ -57,21 +55,13 @@ public class TelegramEventsListener implements Listener {
 
                     if (chatID != null) {
 
-                        instance.getSkypeManager().createLink(event.getMessage().getSender().getId(), (GroupChat) event.getChat(), instance.getSkypeManager().getSkype(event.getMessage().getSender()).getChat(chatID));;
+                        instance.getSkypeManager().createLink(event.getMessage().getSender().getId(), (GroupChat) event.getChat(), instance.getSkypeManager().getSkype(event.getMessage().getSender()).getChat(chatID));
                     }
                 } else {
 
                     event.getChat().sendMessage("This chat is not linked to a skype chat, use /link to link it!", telegramBot);
                 }
             }
-        } else if(event.getChat().getType().equals(ChatType.PRIVATE)) {
-
-            
         }
-    }
-
-    public void captchEvent(Skype skype, CaptchaEvent captchaEvent) {
-
-        //TODO: Add support for sending the captcha back to the bot.
     }
 }

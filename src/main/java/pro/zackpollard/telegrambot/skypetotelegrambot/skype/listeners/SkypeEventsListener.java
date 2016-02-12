@@ -9,8 +9,6 @@ import com.samczsun.skype4j.events.chat.message.MessageEditedEvent;
 import com.samczsun.skype4j.events.chat.message.MessageReceivedEvent;
 import com.samczsun.skype4j.events.chat.sent.PictureReceivedEvent;
 import com.samczsun.skype4j.events.chat.sent.TypingReceivedEvent;
-import com.samczsun.skype4j.events.error.MajorErrorEvent;
-import com.samczsun.skype4j.events.error.MinorErrorEvent;
 import com.samczsun.skype4j.exceptions.ChatNotFoundException;
 import com.samczsun.skype4j.exceptions.ConnectionException;
 import lombok.Getter;
@@ -34,13 +32,13 @@ public class SkypeEventsListener implements Listener {
 
     private final SkypeToTelegramBot instance;
     private final TelegramBot telegramBot;
-    private final Integer telegramID;
+    private final Long telegramID;
     private final File tmpImageDirectory;
 
     //<SkypeChatID, <SkypeMessageID, TGMessageToChat>>
     private final Map<String, Cache<String, TGMessageToChat>> chatCache;
 
-    public SkypeEventsListener(SkypeToTelegramBot instance, TelegramBot telegramBot, Integer telegramID) {
+    public SkypeEventsListener(SkypeToTelegramBot instance, TelegramBot telegramBot, Long telegramID) {
 
         this.instance = instance;
         this.telegramBot = telegramBot;
@@ -90,6 +88,7 @@ public class SkypeEventsListener implements Listener {
                     }
 
                     messageCache.put(event.getMessage().getId(), new TGMessageToChat(message.getChat().getId(), message));
+                    instance.getSkypeManager().getLastSyncedSkypeMessage().put(event.getChat().getIdentity(), event.getMessage().getId());
                 }
             }
         }
@@ -136,6 +135,7 @@ public class SkypeEventsListener implements Listener {
                         try {
                             TelegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message(
                                     "_Message Edited_\n*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(event.getNewContent())).replyTo(tgMessageToChat.getTgMessage()).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                            instance.getSkypeManager().getLastSyncedSkypeMessage().put(event.getChat().getIdentity(), event.getMessage().getId());
                         } catch (ConnectionException e) {
                             e.printStackTrace();
                         }
@@ -174,36 +174,6 @@ public class SkypeEventsListener implements Listener {
                 }
             }
         }
-    }
-
-    @EventHandler
-    public void onSkypeError(MajorErrorEvent event) {
-
-        TelegramBot.getChat(this.telegramID).sendMessage(SendableTextMessage.builder().message("A major error has occurred, the error message was " + event.getError().getMessage()).build(), telegramBot);
-        String stacktrace = "";
-        for(StackTraceElement element : event.getError().getStackTrace()) {
-
-            stacktrace += element.toString() + '\n';
-        }
-        TelegramBot.getChat(this.telegramID).sendMessage(SendableTextMessage.builder().message("The stacktrace is:\n" + stacktrace).build(), telegramBot);
-        TelegramBot.getChat(this.telegramID).sendMessage("Please send the previous two messages to @zackpollard on telegram.", telegramBot);
-        System.out.println("There was a major error in " + event.getSource().name() + ". The error message was: \"" + event.getError().getMessage() + "\"");
-        event.getError().printStackTrace();
-    }
-
-    @EventHandler
-    public void onSkypeError(MinorErrorEvent event) {
-
-        TelegramBot.getChat(this.telegramID).sendMessage(SendableTextMessage.builder().message("A minor error has occurred, the error message was " + event.getError().getMessage()).build(), telegramBot);
-        String stacktrace = "";
-        for(StackTraceElement element : event.getError().getStackTrace()) {
-
-            stacktrace += element.toString() + '\n';
-        }
-        TelegramBot.getChat(this.telegramID).sendMessage(SendableTextMessage.builder().message("The stacktrace is:\n" + stacktrace).build(), telegramBot);
-        TelegramBot.getChat(this.telegramID).sendMessage("Please send the previous two messages to @zackpollard on telegram.", telegramBot);
-        System.out.println("There was a minor error in " + event.getSource().name() + ". The error message was: \"" + event.getError().getMessage() + "\"");
-        event.getError().printStackTrace();
     }
 
     private class TGMessageToChat {

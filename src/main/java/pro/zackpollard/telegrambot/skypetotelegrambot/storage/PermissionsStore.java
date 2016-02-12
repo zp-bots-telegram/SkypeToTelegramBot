@@ -11,14 +11,14 @@ import java.util.Map;
 public class PermissionsStore {
 
     @Getter
-    private final Map<Integer, UserRole> userRoles;
+    private final Map<Long, UserRole> userRoles;
 
     public PermissionsStore() {
 
         this.userRoles = new HashMap<>();
     }
 
-    public UserRole getRole(int user) {
+    public UserRole getRole(long user) {
 
         UserRole role = userRoles.get(user);
 
@@ -27,7 +27,7 @@ public class PermissionsStore {
         return role;
     }
 
-    public void setRole(int user, UserRole userRole) {
+    public void setRole(long user, UserRole userRole) {
 
         userRoles.put(user, userRole);
     }
