@@ -11,6 +11,7 @@ import lombok.Getter;
 import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.Chat;
 import pro.zackpollard.telegrambot.api.chat.GroupChat;
+import pro.zackpollard.telegrambot.api.chat.message.send.ParseMode;
 import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
 import pro.zackpollard.telegrambot.api.keyboards.ReplyKeyboardHide;
 import pro.zackpollard.telegrambot.api.user.User;
@@ -143,7 +144,20 @@ public class SkypeManager {
 
         try {
 
-            Skype skype = new SkypeBuilder(username, password).withAllResources().build();
+            Skype skype = new SkypeBuilder(username, password).withAllResources().withExceptionHandler((errorSource, throwable, b) -> {
+                throwable.printStackTrace();
+
+                telegramBot.sendMessage(TelegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("*An error occurred*\n*Error Source*: " + errorSource.name() + "\n*Message*: " + throwable.getMessage()).parseMode(ParseMode.MARKDOWN).build());
+
+                String stacktrace = "";
+                for(StackTraceElement element : throwable.getStackTrace()) {
+
+                    stacktrace += element.toString() + '\n';
+                }
+                TelegramBot.getChat(telegramUserID).sendMessage(SendableTextMessage.builder().message("The stacktrace is:\n" + stacktrace).build(), telegramBot);
+                TelegramBot.getChat(telegramUserID).sendMessage("Please send the previous two messages to @zackpollard on telegram.", telegramBot);
+            }).build();
+
             skype.login();
             skype.getEventDispatcher().registerListener(new SkypeEventsListener(instance, telegramBot, telegramUserID));
             skype.subscribe();
@@ -187,6 +201,7 @@ public class SkypeManager {
         }
 
         telegramChatToSkypeChat.put(telegramChat.getId(), new TelegramIDSkypeChat(telegramUser, skypeChat.getIdentity()));
+
         ChatMessage lastSyncedMessage = skypeChat.getAllMessages().get(0);
         lastSyncedSkypeMessage.put(skypeChat.getIdentity(), lastSyncedMessage != null ? lastSyncedMessage.getId() : null);
         telegramBot.sendMessage(telegramChat, SendableTextMessage.builder().message("The chats have been linked successfully!").replyMarkup(new ReplyKeyboardHide()).build());
