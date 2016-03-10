@@ -44,7 +44,7 @@ public class SkypeEventsListener implements Listener {
         this.telegramBot = telegramBot;
         this.telegramID = telegramID;
         this.chatCache = new HashMap<>();
-        this.tmpImageDirectory = new File(System.getProperty("java.io.tmpdir") + File.pathSeparator + "tgtoskypebot" + System.currentTimeMillis());
+        this.tmpImageDirectory = new File(System.getProperty("java.io.tmpdir") + File.separatorChar + "tgtoskypebot" + System.currentTimeMillis());
         this.tmpImageDirectory.mkdirs();
     }
 
