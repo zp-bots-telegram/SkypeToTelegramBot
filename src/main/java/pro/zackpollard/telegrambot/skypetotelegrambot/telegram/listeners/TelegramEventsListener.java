@@ -10,11 +10,8 @@ import pro.zackpollard.telegrambot.api.chat.GroupChat;
 import pro.zackpollard.telegrambot.api.event.Listener;
 import pro.zackpollard.telegrambot.api.event.chat.message.TextMessageReceivedEvent;
 import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
-import pro.zackpollard.telegrambot.skypetotelegrambot.skype.Captcha;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Zack Pollard
@@ -23,7 +20,6 @@ public class TelegramEventsListener implements Listener {
 
     private final SkypeToTelegramBot instance;
     private final TelegramBot telegramBot;
-    private final Set<Captcha> captchas = new HashSet<>();
 
     public TelegramEventsListener(SkypeToTelegramBot instance) {
 
