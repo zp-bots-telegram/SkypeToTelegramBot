@@ -120,18 +120,21 @@ public class SkypeManager {
                         messagesToSend.add(chat.getAllMessages().get(i));
                     }
 
-                    for(int i = 0; i <= messagesToSend.size() - 1; ++i) {
+                    if(messagesToSend.size() > 0) {
 
-                        ChatMessage message = messagesToSend.get(i);
+                        for (int i = 0; i <= messagesToSend.size() - 1; ++i) {
 
-                        TelegramBot.getChat(entry.getKey()).sendMessage(SendableTextMessage.builder().message("*" + (message.getSender().getDisplayName() != null ? message.getSender().getDisplayName() : message.getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(message.getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                            ChatMessage message = messagesToSend.get(i);
 
-                        lastSyncedSkypeMessage.put(chat.getIdentity(), message.getId());
+                            TelegramBot.getChat(entry.getKey()).sendMessage(SendableTextMessage.builder().message("*" + (message.getSender().getDisplayName() != null ? message.getSender().getDisplayName() : message.getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(message.getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
 
-                        try {
-                            Thread.sleep(500);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            lastSyncedSkypeMessage.put(chat.getIdentity(), message.getId());
+
+                            try {
+                                Thread.sleep(500);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 } else {
