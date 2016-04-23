@@ -3,6 +3,7 @@ package pro.zackpollard.telegrambot.skypetotelegrambot.skype.listeners;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.samczsun.skype4j.chat.IndividualChat;
+import com.samczsun.skype4j.chat.messages.ChatMessage;
 import com.samczsun.skype4j.events.EventHandler;
 import com.samczsun.skype4j.events.Listener;
 import com.samczsun.skype4j.events.chat.message.MessageEditedEvent;
@@ -38,12 +39,16 @@ public class SkypeEventsListener implements Listener {
     //<SkypeChatID, <SkypeMessageID, TGMessageToChat>>
     private final Map<String, Cache<String, TGMessageToChat>> chatCache;
 
+    //<TGChatID, <TGMessageID, SkypeMessage>>
+    private final Map<String, Cache<Integer, ChatMessage>> privateMessageCache;
+
     public SkypeEventsListener(SkypeToTelegramBot instance, TelegramBot telegramBot, Long telegramID) {
 
         this.instance = instance;
         this.telegramBot = telegramBot;
         this.telegramID = telegramID;
         this.chatCache = new HashMap<>();
+        this.privateMessageCache = new HashMap<>();
         this.tmpImageDirectory = new File(System.getProperty("java.io.tmpdir") + File.separatorChar + "tgtoskypebot" + System.currentTimeMillis());
         this.tmpImageDirectory.mkdirs();
     }
@@ -89,6 +94,37 @@ public class SkypeEventsListener implements Listener {
 
                     messageCache.put(event.getMessage().getId(), new TGMessageToChat(message.getChat().getId(), message));
                     instance.getSkypeManager().getLastSyncedSkypeMessage().put(event.getChat().getIdentity(), event.getMessage().getId());
+                }
+            }
+        } else {
+
+            if(event.getMessage().getChat() instanceof IndividualChat) {
+
+                String chatID = instance.getSkypeManager().getPrivateMessageGroups().get(telegramID);
+
+                if(chatID != null) {
+
+                    Message message = null;
+
+                    try {
+                        message = TelegramBot.getChat(chatID).sendMessage(SendableTextMessage.builder().message("*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() + " (" + event.getMessage().getSender().getUsername() + ")" : event.getMessage().getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(event.getMessage().getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                    } catch (ConnectionException e) {
+                        e.printStackTrace();
+                    }
+
+                    if(message != null) {
+
+                        Cache<Integer, ChatMessage> messageCache = privateMessageCache.get(chatID);
+
+                        if (messageCache == null) {
+
+                            messageCache = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.DAYS).maximumSize(1000).weakValues().build();
+                            privateMessageCache.put(chatID, messageCache);
+                        }
+
+                        messageCache.put(message.getMessageId(), event.getMessage());
+                        instance.getSkypeManager().getLastSyncedSkypeMessage().put(event.getChat().getIdentity(), event.getMessage().getId());
+                    }
                 }
             }
         }

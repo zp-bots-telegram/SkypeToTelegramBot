@@ -56,6 +56,10 @@ public class SkypeManager {
     @Getter
     private final Map<String, String> lastSyncedSkypeMessage;
 
+    //<TGUserID, TGChatID>
+    @Getter
+    private final Map<Long, String> privateMessageGroups;
+
     @Getter
     private transient final Map<String, Map<String, String>> linkingQueue;
 
@@ -73,6 +77,7 @@ public class SkypeManager {
         this.skypeChatToTelegramChat = new HashMap<>();
         this.linkingQueue = new HashMap<>();
         this.lastSyncedSkypeMessage = new HashMap<>();
+        this.privateMessageGroups = new HashMap<>();
     }
 
     public void postLoadInit() {
