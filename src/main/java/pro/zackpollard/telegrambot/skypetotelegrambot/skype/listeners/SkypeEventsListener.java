@@ -105,7 +105,7 @@ public class SkypeEventsListener implements Listener {
 
                 if (chat != null) {
 
-                    telegramBot.sendMessage(TelegramBot.getChat(chat), new SendableChatAction(ChatAction.TYPING_TEXT_MESSAGE));
+                    telegramBot.sendMessage(TelegramBot.getChat(chat), SendableChatAction.builder().chatAction(ChatAction.TYPING_TEXT_MESSAGE).build());
                 }
             }
         }

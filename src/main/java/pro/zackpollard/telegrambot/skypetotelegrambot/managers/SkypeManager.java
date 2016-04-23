@@ -239,7 +239,7 @@ public class SkypeManager {
 
         ChatMessage lastSyncedMessage = skypeChat.getAllMessages().get(0);
         lastSyncedSkypeMessage.put(skypeChat.getIdentity(), lastSyncedMessage != null ? lastSyncedMessage.getId() : null);
-        telegramBot.sendMessage(telegramChat, SendableTextMessage.builder().message("The chats have been linked successfully!").replyMarkup(new ReplyKeyboardHide()).build());
+        telegramBot.sendMessage(telegramChat, SendableTextMessage.builder().message("The chats have been linked successfully!").replyMarkup(ReplyKeyboardHide.builder().build()).build());
         userChats.put(skypeChat.getIdentity(), telegramChat.getId());
 
         instance.saveSkypeManager();
