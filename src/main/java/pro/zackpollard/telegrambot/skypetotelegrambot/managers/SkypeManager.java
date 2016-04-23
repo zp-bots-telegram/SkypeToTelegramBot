@@ -126,6 +126,8 @@ public class SkypeManager {
 
                         TelegramBot.getChat(entry.getKey()).sendMessage(SendableTextMessage.builder().message("*" + (message.getSender().getDisplayName() != null ? message.getSender().getDisplayName() : message.getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(message.getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
 
+                        lastSyncedSkypeMessage.put(chat.getIdentity(), message.getId());
+
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException e) {
@@ -136,6 +138,8 @@ public class SkypeManager {
 
                     lastSyncedSkypeMessage.put(chat.getIdentity(), chat.getAllMessages().get(0).getId());
                 }
+
+                instance.saveSkypeManager();
             } catch (ConnectionException e) {
                 e.printStackTrace();
             } catch (ChatNotFoundException e) {
