@@ -89,6 +89,7 @@ public class SkypeEventsListener implements Listener {
 
                     messageCache.put(event.getMessage().getId(), new TGMessageToChat(message.getChat().getId(), message));
                     instance.getSkypeManager().getLastSyncedSkypeMessage().put(event.getChat().getIdentity(), event.getMessage().getId());
+                    instance.saveSkypeManager();
                 }
             }
         }
@@ -139,6 +140,8 @@ public class SkypeEventsListener implements Listener {
                         } catch (ConnectionException e) {
                             e.printStackTrace();
                         }
+
+                        instance.saveSkypeManager();
                     }
                 }
             }
