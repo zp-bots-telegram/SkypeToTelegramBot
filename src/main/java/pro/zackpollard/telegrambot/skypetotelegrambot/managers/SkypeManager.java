@@ -104,7 +104,7 @@ public class SkypeManager {
                     if(chat instanceof com.samczsun.skype4j.chat.GroupChat) {
 
                         com.samczsun.skype4j.chat.GroupChat groupChat = (com.samczsun.skype4j.chat.GroupChat) chat;
-                        groupChat.loadMoreMessages(100);
+                        groupChat.loadMoreMessages(50);
                     }
                 }
 
