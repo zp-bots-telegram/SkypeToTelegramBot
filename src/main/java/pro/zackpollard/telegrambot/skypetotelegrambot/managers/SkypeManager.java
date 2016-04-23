@@ -112,6 +112,8 @@ public class SkypeManager {
 
                     for(int i = 0; i < chat.getAllMessages().size(); ++i) {
 
+                        System.out.println(chat.getAllMessages().get(i).getContent().asPlaintext());
+
                         if(chat.getAllMessages().get(i).getId().equals(lastSyncedMessageId)) {
 
                             break;
