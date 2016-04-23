@@ -100,13 +100,9 @@ public class SkypeManager {
                 if(chat == null) {
 
                     chat = telegramToSkypeLink.get(entry.getValue().getTelegramUser()).loadChat(entry.getValue().getSkypeChat());
-
-                    if(chat instanceof com.samczsun.skype4j.chat.GroupChat) {
-
-                        com.samczsun.skype4j.chat.GroupChat groupChat = (com.samczsun.skype4j.chat.GroupChat) chat;
-                        groupChat.loadMoreMessages(50);
-                    }
                 }
+
+                chat.loadMoreMessages(50);
 
                 String lastSyncedMessageId = lastSyncedSkypeMessage.get(chat.getIdentity());
 
@@ -136,6 +132,9 @@ public class SkypeManager {
                             e.printStackTrace();
                         }
                     }
+                } else {
+
+                    lastSyncedSkypeMessage.put(chat.getIdentity(), chat.getAllMessages().get(0).getId());
                 }
             } catch (ConnectionException e) {
                 e.printStackTrace();
