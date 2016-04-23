@@ -110,21 +110,20 @@ public class SkypeManager {
 
                     List<ChatMessage> messagesToSend = new LinkedList<>();
 
-                    for(int i = 0; i < chat.getAllMessages().size(); ++i) {
+                    for(int i = chat.getAllMessages().size() - 1; i >= 0; --i) {
 
                         System.out.println("============    " + lastSyncedMessageId);
                         System.out.println(chat.getAllMessages().get(i).getId());
 
                         if(chat.getAllMessages().get(i).getId().equals(lastSyncedMessageId)) {
 
-                            System.out.println("MATCHED!");
                             break;
                         }
 
                         messagesToSend.add(chat.getAllMessages().get(i));
                     }
 
-                    for (int i = 0; i <= messagesToSend.size() - 1; ++i) {
+                    for (int i = chat.getAllMessages().size() - 1; i <= 0; --i) {
 
                         ChatMessage message = messagesToSend.get(i);
 
