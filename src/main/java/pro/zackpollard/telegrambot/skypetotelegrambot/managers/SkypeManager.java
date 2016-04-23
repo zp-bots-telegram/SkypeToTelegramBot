@@ -123,7 +123,7 @@ public class SkypeManager {
                         messagesToSend.add(chat.getAllMessages().get(i));
                     }
 
-                    for (int i = chat.getAllMessages().size() - 1; i <= 0; --i) {
+                    for (int i = chat.getAllMessages().size() - 1; i >= 0; --i) {
 
                         ChatMessage message = messagesToSend.get(i);
 
