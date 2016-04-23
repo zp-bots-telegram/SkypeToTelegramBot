@@ -120,7 +120,7 @@ public class SkypeManager {
                         messagesToSend.add(chat.getAllMessages().get(i));
                     }
 
-                    for(int i = 0; i <= messagesToSend.size(); ++i) {
+                    for(int i = 0; i <= messagesToSend.size() - 1; ++i) {
 
                         ChatMessage message = messagesToSend.get(i);
 
