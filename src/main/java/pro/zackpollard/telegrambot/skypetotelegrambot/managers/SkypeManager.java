@@ -120,26 +120,26 @@ public class SkypeManager {
                         messagesToSend.add(chat.getAllMessages().get(i));
                     }
 
-                    if(messagesToSend.size() > 0) {
+                    for (int i = 0; i <= messagesToSend.size() - 1; ++i) {
 
-                        for (int i = 0; i <= messagesToSend.size() - 1; ++i) {
+                        ChatMessage message = messagesToSend.get(i);
 
-                            ChatMessage message = messagesToSend.get(i);
+                        TelegramBot.getChat(entry.getKey()).sendMessage(SendableTextMessage.builder().message("*" + (message.getSender().getDisplayName() != null ? message.getSender().getDisplayName() : message.getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(message.getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
 
-                            TelegramBot.getChat(entry.getKey()).sendMessage(SendableTextMessage.builder().message("*" + (message.getSender().getDisplayName() != null ? message.getSender().getDisplayName() : message.getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(message.getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                        lastSyncedSkypeMessage.put(chat.getIdentity(), message.getId());
 
-                            lastSyncedSkypeMessage.put(chat.getIdentity(), message.getId());
-
-                            try {
-                                Thread.sleep(500);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                        try {
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
                     }
                 } else {
 
-                    lastSyncedSkypeMessage.put(chat.getIdentity(), chat.getAllMessages().get(0).getId());
+                    if (chat.getAllMessages().size() > 0) {
+
+                        lastSyncedSkypeMessage.put(chat.getIdentity(), chat.getAllMessages().get(0).getId());
+                    }
                 }
 
                 instance.saveSkypeManager();
