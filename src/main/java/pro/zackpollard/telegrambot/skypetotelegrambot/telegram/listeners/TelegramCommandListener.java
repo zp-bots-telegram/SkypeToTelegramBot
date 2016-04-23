@@ -178,6 +178,7 @@ public class TelegramCommandListener implements Listener {
                     if(instance.getSkypeManager().getPermissionsStore().getRole(event.getMessage().getSender().getId()).equals(PermissionsStore.UserRole.SUPERUSER)) {
 
                         System.out.println("User: " + event.getMessage().getSender().getId() + " (" + event.getMessage().getSender().getUsername() + ") told the bot to shutdown.");
+                        instance.saveSkypeManager();
                         System.exit(0);
                     } else {
 
