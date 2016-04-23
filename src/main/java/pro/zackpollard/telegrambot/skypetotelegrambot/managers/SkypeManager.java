@@ -124,14 +124,14 @@ public class SkypeManager {
                         messagesToSend.add(chat.getAllMessages().get(i));
                     }
 
-                    for(int i = messagesToSend.size() - 1; i >= 0; --i) {
+                    for(int i = 0; i <= messagesToSend.size(); ++i) {
 
                         ChatMessage message = messagesToSend.get(i);
 
                         TelegramBot.getChat(entry.getKey()).sendMessage(SendableTextMessage.builder().message("*" + (message.getSender().getDisplayName() != null ? message.getSender().getDisplayName() : message.getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(message.getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
 
                         try {
-                            Thread.sleep(250);
+                            Thread.sleep(500);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
