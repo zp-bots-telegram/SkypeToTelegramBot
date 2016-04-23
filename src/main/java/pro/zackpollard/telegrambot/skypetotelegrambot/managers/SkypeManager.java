@@ -117,6 +117,7 @@ public class SkypeManager {
 
                         if(chat.getAllMessages().get(i).getId().equals(lastSyncedMessageId)) {
 
+                            System.out.println("MATCHED!");
                             break;
                         }
 
