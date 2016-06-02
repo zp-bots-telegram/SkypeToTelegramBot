@@ -72,7 +72,7 @@ public class SkypeEventsListener implements Listener {
 
                 Message message = null;
                 try {
-                    message = telegramBot.sendMessage(TelegramBot.getChat(chat), SendableTextMessage.builder().message("*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(event.getMessage().getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build());
+                    message = telegramBot.sendMessage(telegramBot.getChat(chat), SendableTextMessage.builder().message("*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(event.getMessage().getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build());
                 } catch (ConnectionException e) {
                     e.printStackTrace();
                 }
@@ -106,7 +106,7 @@ public class SkypeEventsListener implements Listener {
 
                 if (chat != null) {
 
-                    telegramBot.sendMessage(TelegramBot.getChat(chat), SendableChatAction.builder().chatAction(ChatAction.TYPING_TEXT_MESSAGE).build());
+                    telegramBot.sendMessage(telegramBot.getChat(chat), SendableChatAction.builder().chatAction(ChatAction.TYPING_TEXT_MESSAGE).build());
                 }
             }
         }
@@ -134,8 +134,8 @@ public class SkypeEventsListener implements Listener {
                     if(tgMessageToChat != null) {
 
                         try {
-                            TelegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message(
-                                    "_Message Edited_\n*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(event.getNewContent())).replyTo(tgMessageToChat.getTgMessage()).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                            telegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message(
+                                    "_Message Edited_\n*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() : event.getMessage().getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(event.getNewContent())).replyTo(tgMessageToChat.getTgMessage()).parseMode(ParseMode.MARKDOWN).build());
                             instance.getSkypeManager().getLastSyncedSkypeMessage().put(event.getChat().getIdentity(), event.getMessage().getId());
                         } catch (ConnectionException e) {
                             e.printStackTrace();
@@ -165,13 +165,13 @@ public class SkypeEventsListener implements Listener {
                     ImageIO.write(event.getSentImage(), "png", imageFile);
                 } catch (IOException e) {
                     System.err.println("An error occured whilst trying to save an image sent from skype to disk.");
-                    TelegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message("*[ERROR]* - An image that was sent from skype could not be sent successfully to telegram, report this to @zackpollard.").parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                    telegramBot.getChat(chat).sendMessage(SendableTextMessage.builder().message("*[ERROR]* - An image that was sent from skype could not be sent successfully to telegram, report this to @zackpollard.").parseMode(ParseMode.MARKDOWN).build());
                     e.printStackTrace();
                     return;
                 }
 
                 try {
-                    TelegramBot.getChat(chat).sendMessage(SendablePhotoMessage.builder().photo(new InputFile(imageFile)).caption("Image sent by " + (event.getSender().getDisplayName() != null ? event.getSender().getDisplayName() : event.getSender().getUsername())).build(), telegramBot);
+                    telegramBot.getChat(chat).sendMessage(SendablePhotoMessage.builder().photo(new InputFile(imageFile)).caption("Image sent by " + (event.getSender().getDisplayName() != null ? event.getSender().getDisplayName() : event.getSender().getUsername())).build());
                 } catch (ConnectionException e) {
                     e.printStackTrace();
                 }

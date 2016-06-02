@@ -79,14 +79,14 @@ public class SkypeManager {
 
         for(Map.Entry<Long, CredentialStore.Credentials> credentials : credentialStore.getTelegramToSkypeCredentials().entrySet()) {
 
-            Chat telegramUser = TelegramBot.getChat(credentials.getKey());
+            Chat telegramUser = telegramBot.getChat(credentials.getKey());
 
             if(skypeLogin(credentials.getKey(), credentials.getValue().getUsername(), credentials.getValue().getPassword())) {
 
-                telegramUser.sendMessage("The Telegram bot restarted and your link to skype has been re-established successfully.", telegramBot);
+                telegramUser.sendMessage("The Telegram bot restarted and your link to skype has been re-established successfully.");
             } else {
 
-                telegramUser.sendMessage("Something went wrong when trying to re-establish your link after the bot restarted, please try to authenticate again.", telegramBot);
+                telegramUser.sendMessage("Something went wrong when trying to re-establish your link after the bot restarted, please try to authenticate again.");
             }
         }
 
@@ -127,7 +127,7 @@ public class SkypeManager {
 
                         ChatMessage message = messagesToSend.get(i);
 
-                        TelegramBot.getChat(entry.getKey()).sendMessage(SendableTextMessage.builder().message("*" + (message.getSender().getDisplayName() != null ? message.getSender().getDisplayName() : message.getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(message.getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                        telegramBot.getChat(entry.getKey()).sendMessage(SendableTextMessage.builder().message("*" + (message.getSender().getDisplayName() != null ? message.getSender().getDisplayName() : message.getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(message.getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build());
 
                         lastSyncedSkypeMessage.put(chat.getIdentity(), message.getId());
 
@@ -150,7 +150,7 @@ public class SkypeManager {
                 e.printStackTrace();
             } catch (ChatNotFoundException e) {
                 telegramChatToSkypeChat.remove(entry.getKey());
-                TelegramBot.getChat(entry.getKey()).sendMessage("It seems that this chat no longer exists on skype, if this is incorrect then please re-link this chat.", telegramBot);
+                telegramBot.getChat(entry.getKey()).sendMessage("It seems that this chat no longer exists on skype, if this is incorrect then please re-link this chat.");
             }
         }
 
@@ -200,15 +200,15 @@ public class SkypeManager {
             Skype skype = new SkypeBuilder(username, password).withAllResources().withExceptionHandler((errorSource, throwable, b) -> {
                 throwable.printStackTrace();
 
-                telegramBot.sendMessage(TelegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("*An error occurred*\n*Error Source*: " + errorSource.name() + "\n*Message*: " + throwable.getMessage()).parseMode(ParseMode.MARKDOWN).build());
+                telegramBot.sendMessage(telegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("*An error occurred*\n*Error Source*: " + errorSource.name() + "\n*Message*: " + throwable.getMessage()).parseMode(ParseMode.MARKDOWN).build());
 
                 String stacktrace = "";
                 for(StackTraceElement element : throwable.getStackTrace()) {
 
                     stacktrace += element.toString() + '\n';
                 }
-                TelegramBot.getChat(telegramUserID).sendMessage(SendableTextMessage.builder().message("The stacktrace is:\n" + stacktrace).build(), telegramBot);
-                TelegramBot.getChat(telegramUserID).sendMessage("Please send the previous two messages to @zackpollard on telegram.", telegramBot);
+                telegramBot.getChat(telegramUserID).sendMessage(SendableTextMessage.builder().message("The stacktrace is:\n" + stacktrace).build());
+                telegramBot.getChat(telegramUserID).sendMessage("Please send the previous two messages to @zackpollard on telegram.");
             }).build();
 
             skype.login();
@@ -222,10 +222,10 @@ public class SkypeManager {
 
             return true;
         } catch (InvalidCredentialsException e) {
-            telegramBot.sendMessage(TelegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("Skype credentials were incorrect.").build());
+            telegramBot.sendMessage(telegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("Skype credentials were incorrect.").build());
         } catch (SkypeException e) {
             e.printStackTrace();
-            telegramBot.sendMessage(TelegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("An error occurred with the Skype API, please try again later.").build());
+            telegramBot.sendMessage(telegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("An error occurred with the Skype API, please try again later.").build());
         }
 
         return false;
@@ -239,13 +239,13 @@ public class SkypeManager {
 
         if(linkedTelegramChatID != null) {
 
-            telegramChat.sendMessage("A link to this chat already exists for another group, the link will be moved to this chat.", telegramBot);
-            if(this.removeLink(TelegramBot.getChat(linkedTelegramChatID), telegramUser)) {
+            telegramChat.sendMessage("A link to this chat already exists for another group, the link will be moved to this chat.");
+            if(this.removeLink(telegramBot.getChat(linkedTelegramChatID), telegramUser)) {
 
-                TelegramBot.getChat(linkedTelegramChatID).sendMessage("The skype link in this chat has been removed due to the link being made in another chat.", telegramBot);
+                telegramBot.getChat(linkedTelegramChatID).sendMessage("The skype link in this chat has been removed due to the link being made in another chat.");
             } else {
 
-                telegramChat.sendMessage("Removal of the link failed.", telegramBot);
+                telegramChat.sendMessage("Removal of the link failed.");
                 return false;
             }
         }

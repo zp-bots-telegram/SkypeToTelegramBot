@@ -55,7 +55,7 @@ public class TelegramEventsListener implements Listener {
                     }
                 } else {
 
-                    event.getChat().sendMessage("This chat is not linked to a skype chat, use /link to link it!", telegramBot);
+                    event.getChat().sendMessage("This chat is not linked to a skype chat, use /link to link it!");
                 }
             }
         }
