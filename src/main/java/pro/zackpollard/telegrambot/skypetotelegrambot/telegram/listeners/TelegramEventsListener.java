@@ -9,6 +9,7 @@ import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.ChatType;
 import pro.zackpollard.telegrambot.api.chat.GroupChat;
 import pro.zackpollard.telegrambot.api.event.Listener;
+import pro.zackpollard.telegrambot.api.event.chat.message.PhotoMessageReceivedEvent;
 import pro.zackpollard.telegrambot.api.event.chat.message.TextMessageReceivedEvent;
 import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 
@@ -58,6 +59,28 @@ public class TelegramEventsListener implements Listener {
                 } else {
 
                     event.getChat().sendMessage("This chat is not linked to a skype chat, use /link to link it!");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onPhotoMessageReceived(PhotoMessageReceivedEvent event) {
+
+        if(event.getChat().getType().equals(ChatType.GROUP)) {
+
+            Chat chat = instance.getSkypeManager().getSkypeChat(event.getChat());
+
+            if(chat != null) {
+
+                String imgurURL = "TODO";
+                //TODO: Add code for uploading the image to imgur
+
+                try {
+
+                    ChatMessage message = chat.sendMessage(Message.create().with(Text.plain(imgurURL + "\n" + event.getContent().getCaption())));
+                } catch (SkypeException e) {
+                    e.printStackTrace();
                 }
             }
         }
