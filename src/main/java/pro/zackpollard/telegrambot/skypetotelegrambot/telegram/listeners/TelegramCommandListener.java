@@ -198,11 +198,11 @@ public class TelegramCommandListener implements Listener {
 
                     if(instance.getSkypeManager().getPrivateMessageGroups().containsKey(event.getMessage().getSender().getId())) {
 
-                        event.getChat().sendMessage(SendableTextMessage.builder().message("Another chat was set as the private message chat, but has been unlinked now.").replyTo(event.getMessage()).build(), telegramBot);
-                        TelegramBot.getChat(instance.getSkypeManager().getPrivateMessageGroups().get(event.getMessage().getSender().getId())).sendMessage("This chat has been unlinked due to another chat being setup for private messages.", telegramBot);
+                        event.getChat().sendMessage(SendableTextMessage.builder().message("Another chat was set as the private message chat, but has been unlinked now.").replyTo(event.getMessage()).build());
+                        telegramBot.getChat(instance.getSkypeManager().getPrivateMessageGroups().get(event.getMessage().getSender().getId())).sendMessage("This chat has been unlinked due to another chat being setup for private messages.");
                     }
 
-                    event.getChat().sendMessage(SendableTextMessage.builder().message("This group will now receive all of the private messages that aren't set to go to specific groups.").replyTo(event.getMessage()).build(), telegramBot);
+                    event.getChat().sendMessage(SendableTextMessage.builder().message("This group will now receive all of the private messages that aren't set to go to specific groups.").replyTo(event.getMessage()).build());
                     instance.getSkypeManager().getPrivateMessageGroups().put(event.getMessage().getSender().getId(), event.getChat().getId());
                 }
 
