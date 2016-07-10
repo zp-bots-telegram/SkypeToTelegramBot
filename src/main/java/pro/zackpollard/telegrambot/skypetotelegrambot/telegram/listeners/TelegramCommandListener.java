@@ -189,6 +189,22 @@ public class TelegramCommandListener implements Listener {
                     }
                 }
             }
+
+            case "setimgurid": {
+
+                if(event.getChat().getType().equals(ChatType.PRIVATE)) {
+
+                    if(instance.getSkypeManager().getPermissionsStore().getRole(event.getMessage().getSender().getId()).equals(PermissionsStore.UserRole.SUPERUSER)) {
+
+                        System.out.println("User: " + event.getMessage().getSender().getId() + " (" + event.getMessage().getSender().getUsername() + ") set their imgur ID to " + event.getArgs()[0]);
+                        instance.getSkypeManager().setImgurID(event.getMessage().getSender().getId(), event.getArgs()[0]);
+                        instance.saveSkypeManager();
+                    } else {
+
+                        event.getChat().sendMessage(SendableTextMessage.builder().message("You do not have permission to do this.").replyTo(event.getMessage()).build());
+                    }
+                }
+            }
         }
     }
 }

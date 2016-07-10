@@ -52,6 +52,9 @@ public class SkypeManager {
     //<TelegramUserID, <SkypeChatID, TelegramChatID>>
     private final Map<Long, Map<String, String>> skypeChatToTelegramChat;
 
+    //<TelegramUserID, ImgurID>
+    private final Map<Long, String> telegramToImgurID;
+
     //<SkypeChatID, LastMessageID>
     @Getter
     private final Map<String, String> lastSyncedSkypeMessage;
@@ -71,6 +74,7 @@ public class SkypeManager {
         this.skypeToTelegramLink = new HashMap<>();
         this.telegramChatToSkypeChat = new HashMap<>();
         this.skypeChatToTelegramChat = new HashMap<>();
+        this.telegramToImgurID = new HashMap<>();
         this.linkingQueue = new HashMap<>();
         this.lastSyncedSkypeMessage = new HashMap<>();
     }
@@ -288,6 +292,16 @@ public class SkypeManager {
     public boolean isSetup(Long telegramUser) {
 
         return telegramToSkypeLink.containsKey(telegramUser);
+    }
+
+    public String getImgurID(long telegramID) {
+
+        return telegramToImgurID.get(telegramID);
+    }
+
+    public void setImgurID(long telegramID, String imgurID) {
+
+        telegramToImgurID.put(telegramID, imgurID);
     }
 
     //Telegram Chat to Skype Chat

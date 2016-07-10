@@ -1,5 +1,6 @@
 package pro.zackpollard.telegrambot.skypetotelegrambot.telegram.listeners;
 
+import com.mashape.unirest.http.exceptions.UnirestException;
 import com.samczsun.skype4j.chat.Chat;
 import com.samczsun.skype4j.chat.messages.ChatMessage;
 import com.samczsun.skype4j.exceptions.SkypeException;
@@ -8,11 +9,16 @@ import com.samczsun.skype4j.formatting.Text;
 import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.ChatType;
 import pro.zackpollard.telegrambot.api.chat.GroupChat;
+import pro.zackpollard.telegrambot.api.chat.message.content.type.PhotoSize;
+import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
 import pro.zackpollard.telegrambot.api.event.Listener;
 import pro.zackpollard.telegrambot.api.event.chat.message.PhotoMessageReceivedEvent;
 import pro.zackpollard.telegrambot.api.event.chat.message.TextMessageReceivedEvent;
 import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
+import pro.zackpollard.telegrambot.skypetotelegrambot.utils.Utils;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -73,14 +79,53 @@ public class TelegramEventsListener implements Listener {
 
             if(chat != null) {
 
-                String imgurURL = "TODO";
-                //TODO: Add code for uploading the image to imgur
+                String imgurID = instance.getSkypeManager().getImgurID(event.getMessage().getSender().getId());
 
-                try {
+                if(imgurID != null) {
 
-                    ChatMessage message = chat.sendMessage(Message.create().with(Text.plain(imgurURL + "\n" + event.getContent().getCaption())));
-                } catch (SkypeException e) {
-                    e.printStackTrace();
+                    int largest = 0;
+                    int largestDimension = 0;
+
+                    for (int i = 0; i < event.getContent().getContent().length; ++i) {
+
+                        PhotoSize content = event.getContent().getContent()[i];
+                        int dimension = content.getWidth() * content.getHeight();
+
+                        if (dimension > largestDimension) {
+
+                            largest = i;
+                            largestDimension = dimension;
+                        }
+                    }
+
+                    File file = null;
+
+                    try {
+                        file = File.createTempFile(System.currentTimeMillis() + "-skypetg", "png");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    event.getContent().getContent()[largest].downloadFile(telegramBot, file);
+
+                    String imgurURL = null;
+
+                    try {
+                        imgurURL = Utils.uploadToImgur(file, imgurID);
+                    } catch (UnirestException e) {
+                        e.printStackTrace();
+                    }
+                    //TODO: Add code for uploading the image to imgur
+
+                    try {
+
+                        ChatMessage message = chat.sendMessage(Message.create().with(Text.plain(imgurURL + "\n" + event.getContent().getCaption())));
+                    } catch (SkypeException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+
+                    event.getChat().sendMessage(SendableTextMessage.builder().replyTo(event.getMessage()).message("Photo sending is not supported without adding an imgur API key. Do this with the command /setimgurid IMGURID").build());
                 }
             }
         }
