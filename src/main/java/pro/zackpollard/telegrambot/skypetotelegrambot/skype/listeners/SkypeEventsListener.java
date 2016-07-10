@@ -40,7 +40,7 @@ public class SkypeEventsListener implements Listener {
     private final Map<String, Cache<String, TGMessageToChat>> chatCache;
 
     //<TGChatID, <TGMessageID, SkypeMessage>>
-    private final Map<String, Cache<Integer, ChatMessage>> privateMessageCache;
+    private final Map<String, Cache<Long, ChatMessage>> privateMessageCache;
 
     public SkypeEventsListener(SkypeToTelegramBot instance, TelegramBot telegramBot, Long telegramID) {
 
@@ -108,14 +108,14 @@ public class SkypeEventsListener implements Listener {
                     Message message = null;
 
                     try {
-                        message = TelegramBot.getChat(chatID).sendMessage(SendableTextMessage.builder().message("*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() + " (" + event.getMessage().getSender().getUsername() + ")" : event.getMessage().getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(event.getMessage().getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build(), telegramBot);
+                        message = telegramBot.getChat(chatID).sendMessage(SendableTextMessage.builder().message("*" + (event.getMessage().getSender().getDisplayName() != null ? event.getMessage().getSender().getDisplayName() + " (" + event.getMessage().getSender().getUsername() + ")" : event.getMessage().getSender().getUsername()) + "*: " + Utils.escapeMarkdownText(event.getMessage().getContent().asPlaintext())).parseMode(ParseMode.MARKDOWN).build());
                     } catch (ConnectionException e) {
                         e.printStackTrace();
                     }
 
                     if(message != null) {
 
-                        Cache<Integer, ChatMessage> messageCache = privateMessageCache.get(chatID);
+                        Cache<Long, ChatMessage> messageCache = privateMessageCache.get(chatID);
 
                         if (messageCache == null) {
 
