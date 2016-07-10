@@ -11,6 +11,7 @@ import pro.zackpollard.telegrambot.api.chat.ChatType;
 import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
 import pro.zackpollard.telegrambot.api.event.Listener;
 import pro.zackpollard.telegrambot.api.event.chat.message.CommandMessageReceivedEvent;
+import pro.zackpollard.telegrambot.api.keyboards.KeyboardButton;
 import pro.zackpollard.telegrambot.api.keyboards.ReplyKeyboardMarkup;
 import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
 import pro.zackpollard.telegrambot.skypetotelegrambot.storage.PermissionsStore;
@@ -42,7 +43,7 @@ public class TelegramCommandListener implements Listener {
                 if(instance.getSkypeManager().getPermissionsStore().getUserRoles().isEmpty()) {
 
                     instance.getSkypeManager().getPermissionsStore().setRole(event.getMessage().getSender().getId(), PermissionsStore.UserRole.SUPERUSER);
-                    event.getChat().sendMessage("You were set as a superuser for the bot.", telegramBot);
+                    event.getChat().sendMessage("You were set as a superuser for the bot.");
                     instance.saveSkypeManager();
                 }
 
@@ -51,10 +52,10 @@ public class TelegramCommandListener implements Listener {
                     if(event.getArgs().length == 2) {
 
                         boolean success = instance.getSkypeManager().addUser(event.getMessage().getSender(), event.getArgs()[0], event.getArgs()[1]);
-                        if(success) event.getChat().sendMessage("Successfully authorised with skype.", telegramBot);
+                        if(success) event.getChat().sendMessage("Successfully authorised with skype.");
                     } else {
 
-                        event.getChat().sendMessage("Correct usage is: /login [username] [password]", telegramBot);
+                        event.getChat().sendMessage("Correct usage is: /login [username] [password]");
                     }
                 }
 
@@ -88,7 +89,9 @@ public class TelegramCommandListener implements Listener {
 
                                 ReplyKeyboardMarkup.ReplyKeyboardMarkupBuilder keyboardMarkupBuilder = ReplyKeyboardMarkup.builder().resize(true).oneTime(true).selective(true);
 
-                                chats.keySet().forEach(keyboardMarkupBuilder::addRow);
+                                for(String chat : chats.keySet()) {
+                                    keyboardMarkupBuilder.addRow(KeyboardButton.builder().text(chat).build());
+                                }
 
                                 telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("Please select the chat you want to link. You can also do /link (username) and /link (chatID). You can get the chat ID of a skype chat by typing /showname in the skype chat you would like to link.").replyMarkup(keyboardMarkupBuilder.build()).replyTo(event.getMessage()).build());
 
@@ -142,14 +145,14 @@ public class TelegramCommandListener implements Listener {
 
                     if(instance.getSkypeManager().removeUser(((pro.zackpollard.telegrambot.api.chat.IndividualChat) event.getChat()).getPartner())) {
 
-                        event.getChat().sendMessage("You have been logged out successfully.", telegramBot);
+                        event.getChat().sendMessage("You have been logged out successfully.");
                     } else {
 
-                        event.getChat().sendMessage("You weren't logged in.", telegramBot);
+                        event.getChat().sendMessage("You weren't logged in.");
                     }
                 } else {
 
-                    event.getChat().sendMessage("This command can only be used in a private chat.", telegramBot);
+                    event.getChat().sendMessage("This command can only be used in a private chat.");
                 }
 
                 break;
@@ -161,10 +164,10 @@ public class TelegramCommandListener implements Listener {
 
                     if(instance.getSkypeManager().removeLink(event.getChat(), event.getMessage().getSender().getId())) {
 
-                        event.getChat().sendMessage("The link to this chat was successfully removed.", telegramBot);
+                        event.getChat().sendMessage("The link to this chat was successfully removed.");
                     } else {
 
-                        event.getChat().sendMessage("This chat is not linked to a skype chat.", telegramBot);
+                        event.getChat().sendMessage("This chat is not linked to a skype chat.");
                     }
                 }
 
@@ -178,10 +181,11 @@ public class TelegramCommandListener implements Listener {
                     if(instance.getSkypeManager().getPermissionsStore().getRole(event.getMessage().getSender().getId()).equals(PermissionsStore.UserRole.SUPERUSER)) {
 
                         System.out.println("User: " + event.getMessage().getSender().getId() + " (" + event.getMessage().getSender().getUsername() + ") told the bot to shutdown.");
+                        instance.saveSkypeManager();
                         System.exit(0);
                     } else {
 
-                        event.getChat().sendMessage(SendableTextMessage.builder().message("You do not have permission to do this.").replyTo(event.getMessage()).build(), telegramBot);
+                        event.getChat().sendMessage(SendableTextMessage.builder().message("You do not have permission to do this.").replyTo(event.getMessage()).build());
                     }
                 }
 
@@ -201,6 +205,26 @@ public class TelegramCommandListener implements Listener {
                     event.getChat().sendMessage(SendableTextMessage.builder().message("This group will now receive all of the private messages that aren't set to go to specific groups.").replyTo(event.getMessage()).build(), telegramBot);
                     instance.getSkypeManager().getPrivateMessageGroups().put(event.getMessage().getSender().getId(), event.getChat().getId());
                 }
+
+                break;
+            }
+
+            case "setimgurid": {
+
+                if(event.getChat().getType().equals(ChatType.PRIVATE)) {
+
+                    if(instance.getSkypeManager().getPermissionsStore().getRole(event.getMessage().getSender().getId()).equals(PermissionsStore.UserRole.SUPERUSER)) {
+
+                        System.out.println("User: " + event.getMessage().getSender().getId() + " (" + event.getMessage().getSender().getUsername() + ") set their imgur ID to " + event.getArgs()[0]);
+                        instance.getSkypeManager().setImgurID(event.getMessage().getSender().getId(), event.getArgs()[0]);
+                        instance.saveSkypeManager();
+                    } else {
+
+                        event.getChat().sendMessage(SendableTextMessage.builder().message("You do not have permission to do this.").replyTo(event.getMessage()).build());
+                    }
+                }
+
+                break;
             }
         }
     }
