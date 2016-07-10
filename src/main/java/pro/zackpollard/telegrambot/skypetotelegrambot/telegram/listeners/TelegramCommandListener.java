@@ -188,6 +188,8 @@ public class TelegramCommandListener implements Listener {
                         event.getChat().sendMessage(SendableTextMessage.builder().message("You do not have permission to do this.").replyTo(event.getMessage()).build());
                     }
                 }
+
+                break;
             }
 
             case "setimgurid": {
@@ -204,6 +206,8 @@ public class TelegramCommandListener implements Listener {
                         event.getChat().sendMessage(SendableTextMessage.builder().message("You do not have permission to do this.").replyTo(event.getMessage()).build());
                     }
                 }
+
+                break;
             }
         }
     }
