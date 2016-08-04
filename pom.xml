@@ -6,7 +6,7 @@
 
     <groupId>pro.zackpollard.telegrambot.skypetotelegrambot</groupId>
     <artifactId>Telegram-SkypeToTelegramBot</artifactId>
-    <version>0.3.0</version>
+    <version>0.3.1</version>
 
     <dependencies>
         <dependency>
@@ -29,6 +29,24 @@
             <artifactId>guava</artifactId>
             <version>19.0-rc2</version>
         </dependency>
+
+        <!--spring-->
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>4.3.2.RELEASE</version>
+        </dependency>
+
+        <!--logger-->
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.21</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>

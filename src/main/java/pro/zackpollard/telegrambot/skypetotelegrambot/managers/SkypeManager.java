@@ -8,6 +8,9 @@ import com.samczsun.skype4j.exceptions.ConnectionException;
 import com.samczsun.skype4j.exceptions.InvalidCredentialsException;
 import com.samczsun.skype4j.exceptions.SkypeException;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.Chat;
 import pro.zackpollard.telegrambot.api.chat.GroupChat;
@@ -15,8 +18,7 @@ import pro.zackpollard.telegrambot.api.chat.message.send.ParseMode;
 import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
 import pro.zackpollard.telegrambot.api.keyboards.ReplyKeyboardHide;
 import pro.zackpollard.telegrambot.api.user.User;
-import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
-import pro.zackpollard.telegrambot.skypetotelegrambot.skype.listeners.SkypeEventsListener;
+import pro.zackpollard.telegrambot.skypetotelegrambot.skype.listeners.SkypeEventListenerFactoryBean;
 import pro.zackpollard.telegrambot.skypetotelegrambot.storage.CredentialStore;
 import pro.zackpollard.telegrambot.skypetotelegrambot.storage.PermissionsStore;
 import pro.zackpollard.telegrambot.skypetotelegrambot.utils.Utils;
@@ -31,8 +33,16 @@ import java.util.Map;
  */
 public class SkypeManager {
 
-    private transient final TelegramBot telegramBot;
-    private transient final SkypeToTelegramBot instance;
+    public transient static Logger logger = LoggerFactory.getLogger(SkypeManager.class);
+
+    @Autowired
+    private transient TelegramBot telegramBot;
+
+    @Autowired
+    private transient SkypeEventListenerFactoryBean listenerFactoryBean;
+
+    @Autowired
+    private transient SkypeManagerKeeper skypeManagerKeeper;
 
     @Getter
     private final PermissionsStore permissionsStore;
@@ -68,9 +78,6 @@ public class SkypeManager {
 
     public SkypeManager() {
 
-        this.instance = SkypeToTelegramBot.getInstance();
-        this.telegramBot = instance.getTelegramBot();
-
         this.permissionsStore = new PermissionsStore();
         this.credentialStore = new CredentialStore();
 
@@ -86,11 +93,11 @@ public class SkypeManager {
 
     public void postLoadInit() {
 
-        for(Map.Entry<Long, CredentialStore.Credentials> credentials : credentialStore.getTelegramToSkypeCredentials().entrySet()) {
+        for (Map.Entry<Long, CredentialStore.Credentials> credentials : credentialStore.getTelegramToSkypeCredentials().entrySet()) {
 
             Chat telegramUser = telegramBot.getChat(credentials.getKey());
 
-            if(skypeLogin(credentials.getKey(), credentials.getValue().getUsername(), credentials.getValue().getPassword())) {
+            if (skypeLogin(credentials.getKey(), credentials.getValue().getUsername(), credentials.getValue().getPassword())) {
 
                 telegramUser.sendMessage("The Telegram bot restarted and your link to skype has been re-established successfully.");
             } else {
@@ -99,32 +106,33 @@ public class SkypeManager {
             }
         }
 
-        for(Map.Entry<String, TelegramIDSkypeChat> entry : new HashMap<>(telegramChatToSkypeChat).entrySet()) {
+        for (Map.Entry<String, TelegramIDSkypeChat> entry : new HashMap<>(telegramChatToSkypeChat).entrySet()) {
 
             try {
                 Skype skype = telegramToSkypeLink.get(entry.getValue().getTelegramUser());
 
                 com.samczsun.skype4j.chat.Chat chat = skype.getChat(entry.getValue().getSkypeChat());
 
-                if(chat == null) {
+                if (chat == null) {
 
                     chat = telegramToSkypeLink.get(entry.getValue().getTelegramUser()).loadChat(entry.getValue().getSkypeChat());
                 }
 
-                chat.loadMoreMessages(50);
+                if (chat instanceof com.samczsun.skype4j.chat.GroupChat) {
+                    ((com.samczsun.skype4j.chat.GroupChat) chat).loadMoreMessages(50);
+                }
 
                 String lastSyncedMessageId = lastSyncedSkypeMessage.get(chat.getIdentity());
 
-                if(lastSyncedMessageId != null) {
+                if (lastSyncedMessageId != null) {
 
                     List<ChatMessage> messagesToSend = new LinkedList<>();
 
-                    for(int i = chat.getAllMessages().size() - 1; i >= 0; --i) {
+                    for (int i = chat.getAllMessages().size() - 1; i >= 0; --i) {
+                        logger.debug("============    " + lastSyncedMessageId);
+                        logger.debug("============    " + chat.getAllMessages().get(i).getId());
 
-                        System.out.println("============    " + lastSyncedMessageId);
-                        System.out.println(chat.getAllMessages().get(i).getId());
-
-                        if(chat.getAllMessages().get(i).getId().equals(lastSyncedMessageId)) {
+                        if (chat.getAllMessages().get(i).getId().equals(lastSyncedMessageId)) {
 
                             break;
                         }
@@ -143,7 +151,7 @@ public class SkypeManager {
                         try {
                             Thread.sleep(500);
                         } catch (InterruptedException e) {
-                            e.printStackTrace();
+                            logger.error("Error when trying to sleep thread", e);
                         }
                     }
                 } else {
@@ -154,35 +162,35 @@ public class SkypeManager {
                     }
                 }
 
-                instance.saveSkypeManager();
+                saveCurrentState();
             } catch (ConnectionException e) {
-                e.printStackTrace();
+                logger.error("Error", e);
             } catch (ChatNotFoundException e) {
+                logger.error("Skype chat error", e);
                 telegramChatToSkypeChat.remove(entry.getKey());
                 telegramBot.getChat(entry.getKey()).sendMessage("It seems that this chat no longer exists on skype, if this is incorrect then please re-link this chat.");
             }
         }
 
-        System.out.println("This is the map printing section...");
+        logger.debug("This is the map printing section...");
 
-        for(Map.Entry<Long, Map<String, String>> map : skypeChatToTelegramChat.entrySet()) {
+        for (Map.Entry<Long, Map<String, String>> map : skypeChatToTelegramChat.entrySet()) {
 
-            System.out.println("This is the map for user: " + map.getKey());
+            logger.info("This is the map for user: {}", map.getKey());
 
-            for(Map.Entry<String, String> entry : map.getValue().entrySet()) {
-
-                System.out.println("< " + map.getKey() + " < " + entry.getKey() + ", " + entry.getValue() + " >");
+            for (Map.Entry<String, String> entry : map.getValue().entrySet()) {
+                logger.info("< " + map.getKey() + ", < " + entry.getKey() + ", " + entry.getValue() + " >");
             }
         }
     }
 
     public boolean addUser(User telegramUser, String username, String password) {
 
-        if(skypeLogin(telegramUser.getId(), username, password)) {
+        if (skypeLogin(telegramUser.getId(), username, password)) {
 
             getCredentialStore().addCredentials(telegramUser, username, password);
 
-            instance.saveSkypeManager();
+            saveCurrentState();
 
             return true;
         }
@@ -192,10 +200,10 @@ public class SkypeManager {
 
     public boolean removeUser(User telegramUser) {
 
-        if(isSetup(telegramUser.getId())) {
+        if (isSetup(telegramUser.getId())) {
 
             boolean removed = credentialStore.removeCredentials(telegramUser);
-            instance.saveSkypeManager();
+            saveCurrentState();
             return removed;
         }
 
@@ -207,12 +215,12 @@ public class SkypeManager {
         try {
 
             Skype skype = new SkypeBuilder(username, password).withAllResources().withExceptionHandler((errorSource, throwable, b) -> {
-                throwable.printStackTrace();
+                logger.error("Skype Builder error", throwable);
 
                 telegramBot.sendMessage(telegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("*An error occurred*\n*Error Source*: " + errorSource.name() + "\n*Message*: " + throwable.getMessage()).parseMode(ParseMode.MARKDOWN).build());
 
                 String stacktrace = "";
-                for(StackTraceElement element : throwable.getStackTrace()) {
+                for (StackTraceElement element : throwable.getStackTrace()) {
 
                     stacktrace += element.toString() + '\n';
                 }
@@ -221,7 +229,7 @@ public class SkypeManager {
             }).build();
 
             skype.login();
-            skype.getEventDispatcher().registerListener(new SkypeEventsListener(instance, telegramBot, telegramUserID));
+            skype.getEventDispatcher().registerListener(listenerFactoryBean.create(telegramUserID));
             skype.subscribe();
 
             telegramToSkypeLink.put(telegramUserID, skype);
@@ -231,10 +239,13 @@ public class SkypeManager {
 
             return true;
         } catch (InvalidCredentialsException e) {
+            logger.error("Skype credentials were incorrect.", e);
             telegramBot.sendMessage(telegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("Skype credentials were incorrect.").build());
         } catch (SkypeException e) {
-            e.printStackTrace();
+            logger.error("An error occurred with the Skype API", e);
             telegramBot.sendMessage(telegramBot.getChat(telegramUserID), SendableTextMessage.builder().message("An error occurred with the Skype API, please try again later.").build());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
 
         return false;
@@ -246,10 +257,10 @@ public class SkypeManager {
 
         String linkedTelegramChatID = userChats.get(skypeChat.getIdentity());
 
-        if(linkedTelegramChatID != null) {
+        if (linkedTelegramChatID != null) {
 
             telegramChat.sendMessage("A link to this chat already exists for another group, the link will be moved to this chat.");
-            if(this.removeLink(telegramBot.getChat(linkedTelegramChatID), telegramUser)) {
+            if (this.removeLink(telegramBot.getChat(linkedTelegramChatID), telegramUser)) {
 
                 telegramBot.getChat(linkedTelegramChatID).sendMessage("The skype link in this chat has been removed due to the link being made in another chat.");
             } else {
@@ -261,19 +272,22 @@ public class SkypeManager {
 
         telegramChatToSkypeChat.put(telegramChat.getId(), new TelegramIDSkypeChat(telegramUser, skypeChat.getIdentity()));
 
-        ChatMessage lastSyncedMessage = skypeChat.getAllMessages().get(0);
+        ChatMessage lastSyncedMessage = null;
+        if (skypeChat.getAllMessages() != null && skypeChat.getAllMessages().size() > 0) {
+            lastSyncedMessage = skypeChat.getAllMessages().get(0);
+        }
         lastSyncedSkypeMessage.put(skypeChat.getIdentity(), lastSyncedMessage != null ? lastSyncedMessage.getId() : null);
         telegramBot.sendMessage(telegramChat, SendableTextMessage.builder().message("The chats have been linked successfully!").replyMarkup(ReplyKeyboardHide.builder().build()).build());
         userChats.put(skypeChat.getIdentity(), telegramChat.getId());
 
-        instance.saveSkypeManager();
+        saveCurrentState();
 
         return true;
     }
 
     public boolean removeLink(Chat telegramChat, long telegramUser) {
 
-        if(isLinked(telegramChat)) {
+        if (isLinked(telegramChat)) {
 
             String skypeChatID = telegramChatToSkypeChat.get(telegramChat.getId()).getSkypeChat();
 
@@ -281,7 +295,7 @@ public class SkypeManager {
             lastSyncedSkypeMessage.remove(skypeChatID);
             telegramChatToSkypeChat.remove(telegramChat.getId());
 
-            instance.saveSkypeManager();
+            saveCurrentState();
 
             return true;
         }
@@ -314,9 +328,8 @@ public class SkypeManager {
 
         TelegramIDSkypeChat data = telegramChatToSkypeChat.get(telegramChat.getId());
 
-        if(data != null) {
-
-            return data.getSkypeInstance().getChat(data.getSkypeChat());
+        if (data != null) {
+            return this.getSkype(data.telegramUser).getChat(data.getSkypeChat());
         }
 
         return null;
@@ -352,8 +365,11 @@ public class SkypeManager {
         }
 
         public Skype getSkypeInstance() {
-
-            return SkypeToTelegramBot.getInstance().getSkypeManager().getSkype(telegramUser);
+            return SkypeManager.this.getSkype(telegramUser);
         }
+    }
+
+    public boolean saveCurrentState() {
+        return skypeManagerKeeper.saveSkypeManager(this);
     }
 }
