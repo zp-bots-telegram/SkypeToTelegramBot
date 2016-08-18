@@ -23,6 +23,7 @@ import pro.zackpollard.telegrambot.skypetotelegrambot.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -44,7 +45,7 @@ public class TelegramEventsListener implements Listener {
     @Override
     public void onTextMessageReceived(TextMessageReceivedEvent event) {
 
-        if (event.getChat().getType().equals(ChatType.GROUP)) {
+        if (Arrays.asList(ChatType.GROUP, ChatType.SUPERGROUP).contains(event.getChat().getType())) {
 
             Chat chat = skypeManager.getSkypeChat(event.getChat());
 
@@ -79,7 +80,7 @@ public class TelegramEventsListener implements Listener {
     @Override
     public void onPhotoMessageReceived(PhotoMessageReceivedEvent event) {
 
-        if (event.getChat().getType().equals(ChatType.GROUP)) {
+        if (Arrays.asList(ChatType.GROUP, ChatType.SUPERGROUP).contains(event.getChat().getType())) {
 
             Chat chat = skypeManager.getSkypeChat(event.getChat());
 
