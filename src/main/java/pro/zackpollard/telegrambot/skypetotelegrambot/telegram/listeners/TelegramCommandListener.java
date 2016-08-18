@@ -6,6 +6,10 @@ import com.samczsun.skype4j.chat.GroupChat;
 import com.samczsun.skype4j.chat.IndividualChat;
 import com.samczsun.skype4j.exceptions.ChatNotFoundException;
 import com.samczsun.skype4j.exceptions.ConnectionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.ChatType;
 import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
@@ -13,7 +17,7 @@ import pro.zackpollard.telegrambot.api.event.Listener;
 import pro.zackpollard.telegrambot.api.event.chat.message.CommandMessageReceivedEvent;
 import pro.zackpollard.telegrambot.api.keyboards.KeyboardButton;
 import pro.zackpollard.telegrambot.api.keyboards.ReplyKeyboardMarkup;
-import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
+import pro.zackpollard.telegrambot.skypetotelegrambot.managers.SkypeManager;
 import pro.zackpollard.telegrambot.skypetotelegrambot.storage.PermissionsStore;
 
 import java.util.HashMap;
@@ -22,37 +26,40 @@ import java.util.Map;
 /**
  * @author Zack Pollard
  */
+@Component
 public class TelegramCommandListener implements Listener {
 
-    private final SkypeToTelegramBot instance;
-    private final TelegramBot telegramBot;
+    public static Logger logger = LoggerFactory.getLogger(TelegramCommandListener.class);
 
-    public TelegramCommandListener(SkypeToTelegramBot instance) {
+    @Autowired
+    private SkypeManager skypeManager;
 
-        this.instance = instance;
-        this.telegramBot = instance.getTelegramBot();
+    @Autowired
+    private TelegramBot telegramBot;
+
+    public TelegramCommandListener() {
     }
 
     @Override
     public void onCommandMessageReceived(CommandMessageReceivedEvent event) {
 
-        switch(event.getCommand().toLowerCase()) {
+        switch (event.getCommand().toLowerCase()) {
 
             case "login": {
 
-                if(instance.getSkypeManager().getPermissionsStore().getUserRoles().isEmpty()) {
+                if (skypeManager.getPermissionsStore().getUserRoles().isEmpty()) {
 
-                    instance.getSkypeManager().getPermissionsStore().setRole(event.getMessage().getSender().getId(), PermissionsStore.UserRole.SUPERUSER);
+                    skypeManager.getPermissionsStore().setRole(event.getMessage().getSender().getId(), PermissionsStore.UserRole.SUPERUSER);
                     event.getChat().sendMessage("You were set as a superuser for the bot.");
-                    instance.saveSkypeManager();
+                    skypeManager.saveCurrentState();
                 }
 
-                if(event.getChat().getType().equals(ChatType.PRIVATE)) {
+                if (event.getChat().getType().equals(ChatType.PRIVATE)) {
 
-                    if(event.getArgs().length == 2) {
+                    if (event.getArgs().length == 2) {
 
-                        boolean success = instance.getSkypeManager().addUser(event.getMessage().getSender(), event.getArgs()[0], event.getArgs()[1]);
-                        if(success) event.getChat().sendMessage("Successfully authorised with skype.");
+                        boolean success = skypeManager.addUser(event.getMessage().getSender(), event.getArgs()[0], event.getArgs()[1]);
+                        if (success) event.getChat().sendMessage("Successfully authorised with skype.");
                     } else {
 
                         event.getChat().sendMessage("Correct usage is: /login [username] [password]");
@@ -64,15 +71,15 @@ public class TelegramCommandListener implements Listener {
 
             case "link": {
 
-                if(event.getChat().getType().equals(ChatType.GROUP)) {
+                if (event.getChat().getType().equals(ChatType.GROUP)) {
 
-                    if(!instance.getSkypeManager().isLinked(event.getChat())) {
+                    if (!skypeManager.isLinked(event.getChat())) {
 
-                        Skype skype = instance.getSkypeManager().getSkype(event.getMessage().getSender());
+                        Skype skype = skypeManager.getSkype(event.getMessage().getSender());
 
-                        if(skype != null) {
+                        if (skype != null) {
 
-                            if(event.getArgs().length == 0) {
+                            if (event.getArgs().length == 0) {
 
                                 Map<String, String> chats = new HashMap<>();
 
@@ -89,38 +96,40 @@ public class TelegramCommandListener implements Listener {
 
                                 ReplyKeyboardMarkup.ReplyKeyboardMarkupBuilder keyboardMarkupBuilder = ReplyKeyboardMarkup.builder().resize(true).oneTime(true).selective(true);
 
-                                for(String chat : chats.keySet()) {
+                                for (String chat : chats.keySet()) {
                                     keyboardMarkupBuilder.addRow(KeyboardButton.builder().text(chat).build());
                                 }
 
                                 telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("Please select the chat you want to link. You can also do /link (username) and /link (chatID). You can get the chat ID of a skype chat by typing /showname in the skype chat you would like to link.").replyMarkup(keyboardMarkupBuilder.build()).replyTo(event.getMessage()).build());
 
-                                instance.getSkypeManager().getLinkingQueue().put(event.getChat().getId(), chats);
-                            } else if(event.getArgs().length == 1) {
+                                skypeManager.getLinkingQueue().put(event.getChat().getId(), chats);
+                            } else if (event.getArgs().length == 1) {
 
                                 String chatID = event.getArgs()[0];
 
-                                if(!Character.isDigit(chatID.charAt(0))) {
+                                if (!Character.isDigit(chatID.charAt(0))) {
 
                                     chatID = "8:" + chatID;
                                 }
 
                                 Chat chat = skype.getChat(chatID);
 
-                                if(chat == null) {
+                                if (chat == null) {
 
                                     try {
                                         chat = skype.loadChat(chatID);
                                     } catch (ConnectionException e) {
+                                        logger.error("There was a connection error whilst trying to link the chat");
                                         telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("There was a connection error whilst trying to link the chat, please try again later.").replyTo(event.getMessage()).build());
                                     } catch (ChatNotFoundException e) {
+                                        logger.error("ID chat does not exist");
                                         telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("A chat with the ID you entered does not exist.").replyTo(event.getMessage()).build());
                                     }
                                 }
 
-                                if(chat != null) {
+                                if (chat != null) {
 
-                                    instance.getSkypeManager().createLink(event.getMessage().getSender().getId(), (pro.zackpollard.telegrambot.api.chat.GroupChat) event.getChat(), chat);
+                                    skypeManager.createLink(event.getMessage().getSender().getId(), (pro.zackpollard.telegrambot.api.chat.GroupChat) event.getChat(), chat);
                                 } else {
 
                                     telegramBot.sendMessage(event.getChat(), SendableTextMessage.builder().message("There was an error whilst trying to link the chat, please report this to @zackpollard.").replyTo(event.getMessage()).build());
@@ -141,9 +150,9 @@ public class TelegramCommandListener implements Listener {
 
             case "logout": {
 
-                if(event.getChat().getType().equals(ChatType.PRIVATE)) {
+                if (event.getChat().getType().equals(ChatType.PRIVATE)) {
 
-                    if(instance.getSkypeManager().removeUser(((pro.zackpollard.telegrambot.api.chat.IndividualChat) event.getChat()).getPartner())) {
+                    if (skypeManager.removeUser(((pro.zackpollard.telegrambot.api.chat.IndividualChat) event.getChat()).getPartner())) {
 
                         event.getChat().sendMessage("You have been logged out successfully.");
                     } else {
@@ -160,9 +169,9 @@ public class TelegramCommandListener implements Listener {
 
             case "unlink": {
 
-                if(event.getChat().getType().equals(ChatType.GROUP)) {
+                if (event.getChat().getType().equals(ChatType.GROUP)) {
 
-                    if(instance.getSkypeManager().removeLink(event.getChat(), event.getMessage().getSender().getId())) {
+                    if (skypeManager.removeLink(event.getChat(), event.getMessage().getSender().getId())) {
 
                         event.getChat().sendMessage("The link to this chat was successfully removed.");
                     } else {
@@ -176,12 +185,11 @@ public class TelegramCommandListener implements Listener {
 
             case "shutdown": {
 
-                if(event.getChat().getType().equals(ChatType.PRIVATE)) {
+                if (event.getChat().getType().equals(ChatType.PRIVATE)) {
 
-                    if(instance.getSkypeManager().getPermissionsStore().getRole(event.getMessage().getSender().getId()).equals(PermissionsStore.UserRole.SUPERUSER)) {
-
-                        System.out.println("User: " + event.getMessage().getSender().getId() + " (" + event.getMessage().getSender().getUsername() + ") told the bot to shutdown.");
-                        instance.saveSkypeManager();
+                    if (skypeManager.getPermissionsStore().getRole(event.getMessage().getSender().getId()).equals(PermissionsStore.UserRole.SUPERUSER)) {
+                        logger.debug("User: " + event.getMessage().getSender().getId() + " (" + event.getMessage().getSender().getUsername() + ") told the bot to shutdown.");
+                        skypeManager.saveCurrentState();
                         System.exit(0);
                     } else {
 
@@ -194,16 +202,16 @@ public class TelegramCommandListener implements Listener {
 
             case "useasprivate": {
 
-                if(event.getChat().getType().equals(ChatType.GROUP)) {
+                if (event.getChat().getType().equals(ChatType.GROUP)) {
 
-                    if(instance.getSkypeManager().getPrivateMessageGroups().containsKey(event.getMessage().getSender().getId())) {
+                    if (skypeManager.getPrivateMessageGroups().containsKey(event.getMessage().getSender().getId())) {
 
                         event.getChat().sendMessage(SendableTextMessage.builder().message("Another chat was set as the private message chat, but has been unlinked now.").replyTo(event.getMessage()).build());
-                        telegramBot.getChat(instance.getSkypeManager().getPrivateMessageGroups().get(event.getMessage().getSender().getId())).sendMessage("This chat has been unlinked due to another chat being setup for private messages.");
+                        telegramBot.getChat(skypeManager.getPrivateMessageGroups().get(event.getMessage().getSender().getId())).sendMessage("This chat has been unlinked due to another chat being setup for private messages.");
                     }
 
                     event.getChat().sendMessage(SendableTextMessage.builder().message("This group will now receive all of the private messages that aren't set to go to specific groups.").replyTo(event.getMessage()).build());
-                    instance.getSkypeManager().getPrivateMessageGroups().put(event.getMessage().getSender().getId(), event.getChat().getId());
+                    skypeManager.getPrivateMessageGroups().put(event.getMessage().getSender().getId(), event.getChat().getId());
                 }
 
                 break;
@@ -211,13 +219,13 @@ public class TelegramCommandListener implements Listener {
 
             case "setimgurid": {
 
-                if(event.getChat().getType().equals(ChatType.PRIVATE)) {
+                if (event.getChat().getType().equals(ChatType.PRIVATE)) {
 
-                    if(instance.getSkypeManager().getPermissionsStore().getRole(event.getMessage().getSender().getId()).equals(PermissionsStore.UserRole.SUPERUSER)) {
+                    if (skypeManager.getPermissionsStore().getRole(event.getMessage().getSender().getId()).equals(PermissionsStore.UserRole.SUPERUSER)) {
+                        logger.debug("User: " + event.getMessage().getSender().getId() + " (" + event.getMessage().getSender().getUsername() + ") set their imgur ID to " + event.getArgs()[0]);
 
-                        System.out.println("User: " + event.getMessage().getSender().getId() + " (" + event.getMessage().getSender().getUsername() + ") set their imgur ID to " + event.getArgs()[0]);
-                        instance.getSkypeManager().setImgurID(event.getMessage().getSender().getId(), event.getArgs()[0]);
-                        instance.saveSkypeManager();
+                        skypeManager.setImgurID(event.getMessage().getSender().getId(), event.getArgs()[0]);
+                        skypeManager.saveCurrentState();
                     } else {
 
                         event.getChat().sendMessage(SendableTextMessage.builder().message("You do not have permission to do this.").replyTo(event.getMessage()).build());

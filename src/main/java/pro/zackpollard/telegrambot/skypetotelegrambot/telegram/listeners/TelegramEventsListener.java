@@ -6,6 +6,10 @@ import com.samczsun.skype4j.chat.messages.ChatMessage;
 import com.samczsun.skype4j.exceptions.SkypeException;
 import com.samczsun.skype4j.formatting.Message;
 import com.samczsun.skype4j.formatting.Text;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import pro.zackpollard.telegrambot.api.TelegramBot;
 import pro.zackpollard.telegrambot.api.chat.ChatType;
 import pro.zackpollard.telegrambot.api.chat.GroupChat;
@@ -14,45 +18,48 @@ import pro.zackpollard.telegrambot.api.chat.message.send.SendableTextMessage;
 import pro.zackpollard.telegrambot.api.event.Listener;
 import pro.zackpollard.telegrambot.api.event.chat.message.PhotoMessageReceivedEvent;
 import pro.zackpollard.telegrambot.api.event.chat.message.TextMessageReceivedEvent;
-import pro.zackpollard.telegrambot.skypetotelegrambot.SkypeToTelegramBot;
+import pro.zackpollard.telegrambot.skypetotelegrambot.managers.SkypeManager;
 import pro.zackpollard.telegrambot.skypetotelegrambot.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Map;
 
 /**
  * @author Zack Pollard
  */
+@Component
 public class TelegramEventsListener implements Listener {
 
-    private final SkypeToTelegramBot instance;
-    private final TelegramBot telegramBot;
+    public static Logger logger = LoggerFactory.getLogger(TelegramEventsListener.class);
 
-    public TelegramEventsListener(SkypeToTelegramBot instance) {
+    @Autowired
+    private SkypeManager skypeManager;
+    @Autowired
+    private TelegramBot telegramBot;
 
-        this.instance = instance;
-        this.telegramBot = instance.getTelegramBot();
+    public TelegramEventsListener() {
     }
 
     @Override
     public void onTextMessageReceived(TextMessageReceivedEvent event) {
 
-        if(event.getChat().getType().equals(ChatType.GROUP)) {
+        if (Arrays.asList(ChatType.GROUP, ChatType.SUPERGROUP).contains(event.getChat().getType())) {
 
-            Chat chat = instance.getSkypeManager().getSkypeChat(event.getChat());
+            Chat chat = skypeManager.getSkypeChat(event.getChat());
 
-            if(chat != null) {
+            if (chat != null) {
 
                 try {
                     ChatMessage message = chat.sendMessage(Message.create().with(Text.plain(event.getContent().getContent())));
-                    instance.getSkypeManager().getLastSyncedSkypeMessage().put(chat.getIdentity(), message.getId());
+                    skypeManager.getLastSyncedSkypeMessage().put(chat.getIdentity(), message.getId());
                 } catch (SkypeException e) {
-                    e.printStackTrace();
+                    logger.error(e.getMessage(), e);
                 }
             } else {
 
-                Map<String, String> chats = instance.getSkypeManager().getLinkingQueue().get(event.getChat().getId());
+                Map<String, String> chats = skypeManager.getLinkingQueue().get(event.getChat().getId());
 
                 if (chats != null) {
 
@@ -60,7 +67,7 @@ public class TelegramEventsListener implements Listener {
 
                     if (chatID != null) {
 
-                        instance.getSkypeManager().createLink(event.getMessage().getSender().getId(), (GroupChat) event.getChat(), instance.getSkypeManager().getSkype(event.getMessage().getSender()).getChat(chatID));
+                        skypeManager.createLink(event.getMessage().getSender().getId(), (GroupChat) event.getChat(), skypeManager.getSkype(event.getMessage().getSender()).getChat(chatID));
                     }
                 } else {
 
@@ -73,15 +80,15 @@ public class TelegramEventsListener implements Listener {
     @Override
     public void onPhotoMessageReceived(PhotoMessageReceivedEvent event) {
 
-        if(event.getChat().getType().equals(ChatType.GROUP)) {
+        if (Arrays.asList(ChatType.GROUP, ChatType.SUPERGROUP).contains(event.getChat().getType())) {
 
-            Chat chat = instance.getSkypeManager().getSkypeChat(event.getChat());
+            Chat chat = skypeManager.getSkypeChat(event.getChat());
 
-            if(chat != null) {
+            if (chat != null) {
 
-                String imgurID = instance.getSkypeManager().getImgurID(event.getMessage().getSender().getId());
+                String imgurID = skypeManager.getImgurID(event.getMessage().getSender().getId());
 
-                if(imgurID != null) {
+                if (imgurID != null) {
 
                     int largest = 0;
                     int largestDimension = 0;
@@ -103,7 +110,7 @@ public class TelegramEventsListener implements Listener {
                     try {
                         file = File.createTempFile(System.currentTimeMillis() + "-skypetg", "png");
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        logger.error(e.getMessage(), e);
                     }
 
                     event.getContent().getContent()[largest].downloadFile(telegramBot, file);
@@ -113,7 +120,7 @@ public class TelegramEventsListener implements Listener {
                     try {
                         imgurURL = Utils.uploadToImgur(file, imgurID);
                     } catch (UnirestException e) {
-                        e.printStackTrace();
+                        logger.error(e.getMessage(), e);
                     }
                     //TODO: Add code for uploading the image to imgur
 
@@ -121,7 +128,7 @@ public class TelegramEventsListener implements Listener {
 
                         ChatMessage message = chat.sendMessage(Message.create().with(Text.plain(imgurURL + "\n" + event.getContent().getCaption())));
                     } catch (SkypeException e) {
-                        e.printStackTrace();
+                        logger.error(e.getMessage(), e);
                     }
                 } else {
 
