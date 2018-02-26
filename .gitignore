@@ -34,3 +34,5 @@ $RECYCLE.BIN/
 !.gitattributes
 !.gitignore
 *~
+
+tgtoskypedata.json
