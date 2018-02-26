@@ -1,6 +1,11 @@
 # SkypeToTelegramBot   
 Skype &lt;-> Telegram Bot, finally, no more skype client...
 
+## Source Code
+Source is stored on GitLab and mirrored to Github   
+[![Repo on GitHub](https://img.shields.io/badge/repo-GitHub-3D76C2.svg)](https://github.com/zackpollard/SkypeToTelegramBot)   
+[![Repo on GitLab](https://img.shields.io/badge/repo-GitLab-6C488A.svg)](https://git.zackpollard.pro/personal-projects/open-source/telegram-bots/SkypeToTelegramBot)
+
 ## Downloads   
 Grab the latest build from the CI here [![Build Status](http://ci.zackpollard.pro/job/SkypeToTelegramBot/badge/icon)](http://ci.zackpollard.pro/job/SkypeToTelegramBot/)
 
